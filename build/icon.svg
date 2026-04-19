@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1565c0"/>
+      <stop offset="100%" style="stop-color:#0d47a1"/>
+    </linearGradient>
+    <linearGradient id="page" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e3f2fd"/>
+      <stop offset="100%" style="stop-color:#bbdefb"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+  <!-- Document shape -->
+  <path d="M160 80 L320 80 L370 130 L370 432 L160 432 Z" fill="url(#page)" stroke="#90caf9" stroke-width="4"/>
+  <!-- Fold corner -->
+  <path d="M320 80 L320 130 L370 130 Z" fill="#90caf9" opacity="0.6"/>
+  <!-- PDF text -->
+  <text x="265" y="290" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="90" fill="#1565c0">PDF</text>
+  <!-- Gear/tool icon -->
+  <circle cx="380" cy="380" r="60" fill="#0a1929" stroke="#38bdf8" stroke-width="6"/>
+  <path d="M380 340 L380 350 M380 410 L380 420 M340 380 L350 380 M410 380 L420 380 M352 352 L359 359 M401 401 L408 408 M352 408 L359 401 M401 352 L408 359" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="380" cy="380" r="20" fill="none" stroke="#38bdf8" stroke-width="5"/>
+</svg>

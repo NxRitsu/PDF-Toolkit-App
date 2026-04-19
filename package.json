@@ -1,0 +1,71 @@
+{
+  "name": "pdf-toolkit",
+  "version": "1.0.0",
+  "description": "PDF Toolkit — Compresser, fusionner, découper, convertir et signer vos PDFs",
+  "main": "src/main.js",
+  "author": "Nicodinho",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:all": "electron-builder --win --mac",
+    "dist": "electron-builder --win --mac"
+  },
+  "build": {
+    "appId": "com.nicodinho.pdf-toolkit",
+    "productName": "PDF Toolkit",
+    "copyright": "Copyright © 2024 Nicodinho",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "PDF-Toolkit-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.png",
+      "uninstallerIcon": "build/icon.png",
+      "installerHeaderIcon": "build/icon.png",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PDF Toolkit",
+      "installerLanguages": ["fr"],
+      "language": "1036"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity",
+      "artifactName": "PDF-Toolkit-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "title": "PDF Toolkit",
+      "contents": [
+        { "x": 130, "y": 220 },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.0"
+  }
+}

@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="fr" style="height:100%">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https:; font-src 'self'"/>
+  <title>PDF Toolkit</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    html, body { height: 100%; overflow-x: hidden; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #020c1b; color: #e0f2fe; font-family: system-ui, sans-serif; min-height: 100vh; padding: 24px 16px; }
+    .container { max-width: 620px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 28px; }
+    .header h1 { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #38bdf8, #1d4ed8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header p { color: #64b5d6; font-size: 12px; margin-top: 5px; }
+    .nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; justify-content: center; }
+    .nav button { padding: 9px 13px; border-radius: 10px; border: 1px solid #1a3a5c; cursor: pointer; font-weight: 600; font-size: 12px; background: #0a1929; color: #64b5d6; transition: all .2s; }
+    .nav button.active { background: #1565c0; color: #fff; border-color: #38bdf8; box-shadow: 0 0 16px #1976d233; }
+    .card { background: #0d2137; border-radius: 16px; padding: 22px; border: 1px solid #1a3a5c; box-shadow: 0 4px 32px #00000066; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .card-header h2 { font-size: 16px; color: #e0f2fe; }
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+    .badge.local { background: #0c4a6e; color: #38bdf8; }
+    .badge.external { background: #451a03; color: #fbbf24; }
+    .tool { display: none; flex-direction: column; gap: 14px; }
+    .tool.active { display: flex; }
+    .dropzone { border: 2px dashed #1a3a5c; border-radius: 12px; padding: 28px 16px; text-align: center; cursor: pointer; background: #0a1929; transition: all .2s; color: #64b5d6; }
+    .dropzone:hover, .dropzone.drag { border-color: #38bdf8; background: #0a1929cc; }
+    .dropzone .icon { font-size: 30px; margin-bottom: 8px; }
+    .dropzone p { font-size: 13px; }
+    .btn { padding: 11px; border-radius: 10px; border: none; background: #1976d2; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; width: 100%; transition: background .2s; }
+    .btn:disabled { background: #1a3a5c; cursor: default; }
+    .btn.success { background: #0e7490; }
+    .btn.warn { background: #fbbf24; color: #000; }
+    .btn.secondary { background: #0d2137; border: 1px solid #1a3a5c; color: #64b5d6; }
+    .result-box { background: #0e749022; border: 1px solid #0ea5e9; border-radius: 10px; padding: 14px; }
+    .result-box .title { color: #38bdf8; font-weight: 700; margin-bottom: 4px; }
+    .result-box .info { color: #64b5d6; font-size: 13px; }
+    .file-tag { display: flex; justify-content: space-between; align-items: center; background: #0d2137; border-radius: 8px; padding: 8px 12px; }
+    .file-tag span { color: #e0f2fe; font-size: 13px; }
+    .file-tag button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 15px; }
+    .warn-box { background: #451a0322; border: 1px solid #f59e0b; border-radius: 10px; padding: 12px; color: #fbbf24; font-size: 13px; }
+    input[type="number"], input[type="text"] { padding: 8px 10px; border-radius: 8px; border: 1px solid #1a3a5c; background: #0a1929; color: #e0f2fe; font-size: 14px; }
+    input[type="number"] { width: 64px; text-align: center; }
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .label { color: #64b5d6; font-size: 13px; }
+    /* SIGN */
+    .tabs { display: flex; gap: 2px; background: #0a1929; border-radius: 10px; padding: 4px; }
+    .tabs button { flex: 1; padding: 8px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; cursor: pointer; background: transparent; color: #64b5d6; }
+    .tabs button.active { background: #1976d2; color: #fff; }
+    .mode-btns { display: flex; gap: 8px; }
+    .mode-btns button { flex: 1; padding: 9px; border-radius: 8px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; background: #0d2137; color: #64b5d6; }
+    .mode-btns button.active { background: #1976d2; color: #fff; }
+    canvas#sigCanvas { background: #0a1929; border-radius: 10px; border: 1px solid #1a3a5c; cursor: crosshair; width: 100%; touch-action: none; display: block; }
+    #typedSig { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #1a3a5c; background: #0a1929; font-size: 26px; font-style: italic; font-family: Georgia, serif; }
+    .color-picker { display: flex; gap: 8px; align-items: center; }
+    .color-picker span { color: #64b5d6; font-size: 12px; }
+    .color-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border .15s; flex-shrink: 0; }
+    .color-dot.selected { border-color: #fff; }
+    .saved-sig { display: flex; align-items: center; gap: 10px; background: #0a1929; border: 1px solid #1a3a5c; border-radius: 10px; padding: 8px 12px; cursor: pointer; transition: all .15s; }
+    .saved-sig.selected { background: #0a2744; border-color: #38bdf8; }
+    .saved-sig img { height: 34px; max-width: 110px; object-fit: contain; background: #0d2137; border-radius: 6px; padding: 4px; }
+    .saved-sig .info { flex: 1; }
+    .saved-sig .info .name { color: #e0f2fe; font-size: 13px; font-weight: 600; }
+    .saved-sig .info .meta { color: #64b5d6; font-size: 11px; }
+    .save-row { display: flex; gap: 8px; }
+    .save-row input { flex: 1; }
+    .save-btn { padding: 9px 14px; border-radius: 8px; border: none; background: #0c4a6e; color: #38bdf8; cursor: pointer; font-weight: 700; font-size: 13px; white-space: nowrap; }
+    #previewWrap { position: relative; cursor: crosshair; border-radius: 10px; overflow: hidden; border: 1px solid #1a3a5c; }
+    #previewWrap img#pageImg { width: 100%; display: block; }
+    #sigOverlay { position: absolute; transform: translate(-50%,-50%); width: 28%; opacity: 0.9; pointer-events: none; display: none; }
+    .page-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .page-btns button { padding: 4px 10px; border-radius: 6px; border: none; background: #0d2137; color: #64b5d6; cursor: pointer; font-weight: 700; }
+    .page-btns button.active { background: #1976d2; color: #fff; }
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: #000000cc; align-items: center; justify-content: center; z-index: 200; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #0d2137; border-radius: 16px; padding: 28px; max-width: 420px; width: 90%; border: 1px solid #1e4976; box-shadow: 0 0 40px #1976d233; }
+    .modal h3 { color: #38bdf8; text-align: center; margin-bottom: 6px; font-size: 16px; }
+    .modal p { color: #64b5d6; font-size: 13px; text-align: center; margin-bottom: 16px; }
+    .modal .filename-row { display: flex; align-items: center; background: #0a1929; border: 1px solid #1a3a5c; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+    .modal .filename-row input { flex: 1; padding: 11px 14px; background: transparent; border: none; color: #e0f2fe; font-size: 15px; outline: none; }
+    .modal .filename-row span { padding: 0 14px; color: #64b5d6; font-size: 14px; border-left: 1px solid #1a3a5c; }
+    .modal .modal-btns { display: flex; gap: 10px; }
+    .modal .modal-btns button { flex: 1; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 700; }
+    .modal .modal-btns .cancel { border: 1px solid #1a3a5c; background: transparent; color: #64b5d6; }
+    .modal .modal-btns .confirm { border: none; background: #1976d2; color: #fff; font-size: 15px; }
+    /* WARN MODAL */
+    .warn-modal { border-color: #f59e0b; }
+    .warn-modal h3 { color: #fbbf24; }
+    .warn-modal .confirm { background: #fbbf24; color: #000; }
+    .footer { text-align: center; color: #2a5278; font-size: 11px; margin-top: 16px; }
+    .success-msg { font-size: 12px; color: #0ea5e9; text-align: center; }
+    .empty-sigs { color: #2a5278; font-size: 12px; text-align: center; padding: 14px; background: #0a1929; border-radius: 10px; border: 1px dashed #1a3a5c; }
+    .done-screen { text-align: center; padding: 24px; }
+    .done-screen .icon { font-size: 46px; margin-bottom: 10px; }
+    .done-screen h3 { color: #38bdf8; font-size: 16px; margin-bottom: 6px; }
+    .done-screen p { color: #64b5d6; font-size: 13px; margin-bottom: 18px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div style="font-size:38px;margin-bottom:6px">📄</div>
+    <h1>PDF Toolkit</h1>
+    <p style="color:#38bdf8;font-size:13px;font-style:italic;margin-top:2px">by Nicodinho</p>
+    <p>Vos fichiers restent sur votre appareil 🔒</p>
+  </div>
+
+  <div class="nav">
+    <button class="active" onclick="switchTool('compress',this)">📉 Compression PDF</button>
+    <button onclick="switchTool('merge',this)">📑 Fusionner des PDFs</button>
+    <button onclick="switchTool('split',this)">✂️ Découper un PDF</button>
+    <button onclick="switchTool('img2pdf',this)">🖼️ Image → PDF</button>
+    <button onclick="switchTool('sign',this)">✍️ Signer un PDF</button>
+    <button onclick="switchTool('pdf2word',this)">📄 PDF → Word</button>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 id="toolTitle">📉 Compression PDF</h2>
+      <span class="badge local" id="toolBadge">🔒 100% Local</span>
+    </div>
+
+    <!-- COMPRESS -->
+    <div class="tool active" id="tool-compress">
+      <div class="dropzone" id="dz-compress" onclick="document.getElementById('f-compress').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-compress')">
+        <div class="icon">📂</div><p>Glisse ton PDF ici ou clique pour sélectionner</p>
+      </div>
+      <input type="file" id="f-compress" accept=".pdf" style="display:none" onchange="compressLoad(this)">
+      <div id="compress-info" style="display:none;color:#7dd3fc;font-size:13px"></div>
+      <div id="compress-result" style="display:none" class="result-box">
+        <div class="title">✅ Compression terminée</div>
+        <div class="info" id="compress-stats"></div>
+        <button class="btn success" style="margin-top:10px;width:auto;padding:8px 18px" onclick="triggerDownload(window._compressBytes,'compresse_'+window._compressName)">⬇️ Télécharger</button>
+      </div>
+      <button class="btn" id="compress-btn" style="display:none" onclick="doCompress()">Compresser</button>
+    </div>
+
+    <!-- MERGE -->
+    <div class="tool" id="tool-merge">
+      <div class="dropzone" onclick="document.getElementById('f-merge').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-merge')">
+        <div class="icon">📂</div><p>Glisse tes PDFs ici (plusieurs à la fois)</p>
+      </div>
+      <input type="file" id="f-merge" accept=".pdf" multiple style="display:none" onchange="mergeAdd(this)">
+      <div id="merge-list"></div>
+      <button class="btn" id="merge-btn" style="display:none" onclick="doMerge()">Fusionner</button>
+    </div>
+
+    <!-- SPLIT -->
+    <div class="tool" id="tool-split">
+      <div class="dropzone" onclick="document.getElementById('f-split').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-split')">
+        <div class="icon">📂</div><p>Glisse ton PDF ici</p>
+      </div>
+      <input type="file" id="f-split" accept=".pdf" style="display:none" onchange="splitLoad(this)">
+      <div id="split-info" style="display:none;color:#7dd3fc;font-size:13px"></div>
+      <div id="split-controls" style="display:none">
+        <div class="row" style="margin-bottom:14px">
+          <span class="label">De la page</span>
+          <input type="number" id="split-from" value="1" min="1">
+          <span class="label">à</span>
+          <input type="number" id="split-to" value="1" min="1">
+        </div>
+        <button class="btn" onclick="doSplit()">Extraire les pages</button>
+      </div>
+    </div>
+
+    <!-- IMG2PDF -->
+    <div class="tool" id="tool-img2pdf">
+      <div class="dropzone" onclick="document.getElementById('f-img').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-img')">
+        <div class="icon">📂</div><p>Glisse tes images JPG/PNG ici</p>
+      </div>
+      <input type="file" id="f-img" accept="image/png,image/jpeg" multiple style="display:none" onchange="imgAdd(this)">
+      <div id="img-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      <button class="btn" id="img-btn" style="display:none" onclick="doImg2Pdf()">Convertir en PDF</button>
+    </div>
+
+    <!-- SIGN -->
+    <div class="tool" id="tool-sign">
+      <!-- Step: upload -->
+      <div id="sign-upload">
+        <div class="dropzone" onclick="document.getElementById('f-sign').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-sign')">
+          <div class="icon">📂</div><p>Glisse ton PDF à signer ici</p>
+        </div>
+        <input type="file" id="f-sign" accept=".pdf" style="display:none" onchange="signLoad(this)">
+        <div id="sign-loading" style="display:none;color:#38bdf8;text-align:center;font-size:13px">Chargement du PDF...</div>
+      </div>
+      <!-- Step: create sig -->
+      <div id="sign-create" style="display:none;flex-direction:column;gap:14px">
+        <div style="color:#7dd3fc;font-size:13px" id="sign-filename"></div>
+        <div class="tabs">
+          <button class="active" onclick="switchSigTab('new',this)">✏️ Nouvelle signature</button>
+          <button onclick="switchSigTab('saved',this)">📁 Enregistrées (<span id="saved-count">0</span>)</button>
+        </div>
+        <!-- New sig -->
+        <div id="sig-new-panel" style="display:flex;flex-direction:column;gap:12px">
+          <div class="mode-btns">
+            <button class="active" id="btn-draw" onclick="setSigMode('draw')">✏️ Dessiner</button>
+            <button id="btn-type" onclick="setSigMode('type')">⌨️ Taper</button>
+          </div>
+          <div class="color-picker">
+            <span>Couleur :</span>
+            <div class="color-dot selected" style="background:#38bdf8" onclick="setSigColor('#38bdf8',this)"></div>
+            <div class="color-dot" style="background:#1976d2" onclick="setSigColor('#1976d2',this)"></div>
+            <div class="color-dot" style="background:#34d399" onclick="setSigColor('#34d399',this)"></div>
+            <div class="color-dot" style="background:#f87171" onclick="setSigColor('#f87171',this)"></div>
+            <div class="color-dot" style="background:#fbbf24" onclick="setSigColor('#fbbf24',this)"></div>
+            <div class="color-dot" style="background:#000000" onclick="setSigColor('#000000',this)"></div>
+            <input type="color" value="#38bdf8" onchange="setSigColor(this.value,null)" style="width:22px;height:22px;border-radius:50%;border:none;padding:0;cursor:pointer">
+          </div>
+          <div id="draw-panel">
+            <div style="font-size:12px;color:#64b5d6;margin-bottom:6px">Dessine ta signature :</div>
+            <canvas id="sigCanvas" width="600" height="180"></canvas>
+            <button onclick="clearCanvas()" style="margin-top:6px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px">🗑 Effacer</button>
+          </div>
+          <div id="type-panel" style="display:none">
+            <div style="font-size:12px;color:#64b5d6;margin-bottom:6px">Tape ton nom :</div>
+            <input type="text" id="typedSig" placeholder="ex : Nicodème Dupont">
+          </div>
+          <div class="save-row">
+            <input type="text" id="sigNameInput" placeholder="Nom de la signature (optionnel)" style="flex:1">
+            <button class="save-btn" onclick="saveSignature()">💾 Enregistrer</button>
+          </div>
+          <button class="btn" onclick="confirmSignature()">Placer sur le PDF →</button>
+        </div>
+        <!-- Saved sigs -->
+        <div id="sig-saved-panel" style="display:none;flex-direction:column;gap:10px">
+          <div id="saved-list"></div>
+          <button class="btn" id="use-saved-btn" style="display:none" onclick="useSavedSig()">Utiliser cette signature →</button>
+        </div>
+      </div>
+      <!-- Step: place -->
+      <div id="sign-place" style="display:none;flex-direction:column;gap:14px">
+        <div class="page-btns" id="page-btns"></div>
+        <div style="font-size:13px;color:#64b5d6">👆 Clique sur la page pour placer ta signature</div>
+        <div id="previewWrap" onclick="placeSig(event)">
+          <img id="pageImg" src="" alt="page">
+          <img id="sigOverlay" src="" alt="sig">
+        </div>
+        <div id="place-hint" style="display:none;font-size:12px;color:#0ea5e9;text-align:center">✅ Clique ailleurs pour repositionner</div>
+        <div class="row">
+          <button class="btn secondary" style="flex:1" onclick="signStep('create')">← Modifier</button>
+          <button class="btn" style="flex:2" id="apply-btn" onclick="applySignature()">⬇️ Télécharger le PDF signé</button>
+        </div>
+      </div>
+      <!-- Step: done -->
+      <div id="sign-done" style="display:none" class="done-screen">
+        <div class="icon">✅</div>
+        <h3>PDF signé téléchargé !</h3>
+        <p>Sauvegardé sur ton appareil.</p>
+        <button class="btn" onclick="signReset()">Signer un autre document</button>
+      </div>
+    </div>
+
+    <!-- PDF2WORD -->
+    <div class="tool" id="tool-pdf2word">
+      <div class="warn-box">⚠️ Cette fonctionnalité envoie ton fichier à un serveur externe. Tu seras averti avant de continuer.</div>
+      <div class="dropzone" onclick="pdf2wordClick()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="pdf2wordDrop(event,this)">
+        <div class="icon">📂</div><p>Glisse ton PDF ici</p>
+      </div>
+      <input type="file" id="f-pdf2word" accept=".pdf" style="display:none" onchange="pdf2wordLoad(this)">
+      <div id="pdf2word-info" style="display:none;color:#7dd3fc;font-size:13px"></div>
+      <button class="btn warn" id="pdf2word-btn" style="display:none" onclick="doPdf2Word()">Convertir en Word</button>
+    </div>
+  </div>
+
+  <p class="footer">PDF Toolkit — Traitement local • Aucune donnée envoyée (sauf PDF→Word)</p>
+</div>
+
+<!-- DOWNLOAD MODAL -->
+<div class="modal-overlay" id="dl-modal">
+  <div class="modal">
+    <div style="font-size:32px;text-align:center;margin-bottom:10px">💾</div>
+    <h3>Nom du fichier</h3>
+    <p>Tu peux renommer ton fichier avant de télécharger</p>
+    <div class="filename-row">
+      <input type="text" id="dl-name" onkeydown="if(event.key==='Enter')confirmDownload()">
+      <span>.pdf</span>
+    </div>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeDownloadModal()">Annuler</button>
+      <button class="confirm" onclick="confirmDownload()">⬇️ Télécharger</button>
+    </div>
+  </div>
+</div>
+
+<!-- WARN MODAL -->
+<div class="modal-overlay" id="warn-modal">
+  <div class="modal warn-modal">
+    <div style="font-size:38px;text-align:center;margin-bottom:10px">⚠️</div>
+    <h3>Avertissement de confidentialité</h3>
+    <p>La conversion <strong style="color:#fff">PDF → Word</strong> nécessite l'envoi de ton fichier vers un <strong style="color:#fbbf24">serveur externe</strong>.<br><br>Si ton fichier contient des données sensibles, il est recommandé de <strong style="color:#fbbf24">ne pas continuer</strong>.</p>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeWarnModal()">Annuler</button>
+      <button class="confirm" onclick="acceptWarn()">Je comprends, continuer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ─── TOOL SWITCH ──────────────────────────────────────────────────────────────
+const TOOLS_META = {
+  compress: { title: '📉 Compression PDF', local: true },
+  merge:    { title: '📑 Fusionner des PDFs', local: true },
+  split:    { title: '✂️ Découper un PDF', local: true },
+  img2pdf:  { title: '🖼️ Image → PDF', local: true },
+  sign:     { title: '✍️ Signer un PDF', local: true },
+  pdf2word: { title: '📄 PDF → Word', local: false },
+};
+function switchTool(id, btn) {
+  document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tool-' + id).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('toolTitle').textContent = TOOLS_META[id].title;
+  const badge = document.getElementById('toolBadge');
+  badge.textContent = TOOLS_META[id].local ? '🔒 100% Local' : '⚠️ API externe';
+  badge.className = 'badge ' + (TOOLS_META[id].local ? 'local' : 'external');
+}
+
+// ─── DROPZONE ──────────────────────────────────────────────────────────────────
+function dzDrag(e, el) { e.preventDefault(); el.classList.add('drag'); }
+function dzLeave(el) { el.classList.remove('drag'); }
+function dzDrop(e, el, inputId) {
+  e.preventDefault(); el.classList.remove('drag');
+  const input = document.getElementById(inputId);
+  const dt = new DataTransfer();
+  Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+  input.files = dt.files;
+  input.dispatchEvent(new Event('change'));
+}
+
+// ─── DOWNLOAD MODAL ──────────────────────────────────────────────────────────
+let _dlBytes = null;
+function triggerDownload(bytes, defaultName) {
+  _dlBytes = bytes;
+  document.getElementById('dl-name').value = defaultName.replace(/\.pdf$/i, '');
+  document.getElementById('dl-modal').classList.add('show');
+  setTimeout(() => document.getElementById('dl-name').focus(), 100);
+}
+function closeDownloadModal() { document.getElementById('dl-modal').classList.remove('show'); }
+function confirmDownload() {
+  const name = (document.getElementById('dl-name').value.trim() || 'fichier') + '.pdf';
+  const blob = new Blob([_dlBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  closeDownloadModal();
+}
+
+// ─── COMPRESS ──────────────────────────────────────────────────────────────────
+let _compressFile = null;
+function compressLoad(input) {
+  _compressFile = input.files[0];
+  document.getElementById('compress-info').textContent = '📎 ' + _compressFile.name + ' (' + (_compressFile.size/1024).toFixed(1) + ' Ko)';
+  document.getElementById('compress-info').style.display = 'block';
+  document.getElementById('compress-result').style.display = 'none';
+  document.getElementById('compress-btn').style.display = 'block';
+}
+async function doCompress() {
+  const btn = document.getElementById('compress-btn');
+  btn.textContent = 'Compression en cours...'; btn.disabled = true;
+  const buf = await _compressFile.arrayBuffer();
+  const { PDFDocument } = PDFLib;
+  const pdf = await PDFDocument.load(buf, { ignoreEncryption: true });
+  pdf.setTitle(''); pdf.setAuthor(''); pdf.setSubject(''); pdf.setKeywords([]);
+  const bytes = await pdf.save({ useObjectStreams: true });
+  window._compressBytes = bytes;
+  window._compressName = _compressFile.name;
+  const saved = ((buf.byteLength - bytes.byteLength) / buf.byteLength * 100).toFixed(1);
+  document.getElementById('compress-stats').innerHTML =
+    'Avant : ' + (buf.byteLength/1024).toFixed(1) + ' Ko → Après : ' + (bytes.byteLength/1024).toFixed(1) + ' Ko<br>Réduction : ' + (parseFloat(saved)>0?saved:'0') + '%';
+  document.getElementById('compress-result').style.display = 'block';
+  document.getElementById('compress-btn').style.display = 'none';
+  btn.textContent = 'Compresser'; btn.disabled = false;
+}
+
+// ─── MERGE ─────────────────────────────────────────────────────────────────────
+let _mergeFiles = [];
+function mergeAdd(input) {
+  Array.from(input.files).forEach(f => _mergeFiles.push(f));
+  renderMergeList();
+}
+function renderMergeList() {
+  const list = document.getElementById('merge-list');
+  list.innerHTML = '';
+  _mergeFiles.forEach((f, i) => {
+    const d = document.createElement('div'); d.className = 'file-tag';
+    d.innerHTML = '<span>📄 ' + f.name + '</span><button onclick="_mergeFiles.splice('+i+',1);renderMergeList()">✕</button>';
+    list.appendChild(d);
+  });
+  document.getElementById('merge-btn').style.display = _mergeFiles.length >= 2 ? 'block' : 'none';
+  document.getElementById('merge-btn').textContent = 'Fusionner ' + _mergeFiles.length + ' PDFs';
+}
+async function doMerge() {
+  const btn = document.getElementById('merge-btn');
+  btn.textContent = 'Fusion en cours...'; btn.disabled = true;
+  const { PDFDocument } = PDFLib;
+  const merged = await PDFDocument.create();
+  for (const f of _mergeFiles) {
+    const pdf = await PDFDocument.load(await f.arrayBuffer(), { ignoreEncryption: true });
+    const pages = await merged.copyPages(pdf, pdf.getPageIndices());
+    pages.forEach(p => merged.addPage(p));
+  }
+  triggerDownload(await merged.save(), 'fusion.pdf');
+  btn.textContent = 'Fusionner ' + _mergeFiles.length + ' PDFs'; btn.disabled = false;
+}
+
+// ─── SPLIT ─────────────────────────────────────────────────────────────────────
+let _splitFile = null, _splitMax = 1;
+function splitLoad(input) {
+  _splitFile = input.files[0];
+  document.getElementById('split-info').textContent = '📎 ' + _splitFile.name;
+  document.getElementById('split-info').style.display = 'block';
+  PDFLib.PDFDocument.load(_splitFile.arrayBuffer(), { ignoreEncryption: true }).then(pdf => {
+    _splitMax = pdf.getPageCount();
+    document.getElementById('split-from').value = 1;
+    document.getElementById('split-from').max = _splitMax;
+    document.getElementById('split-to').value = _splitMax;
+    document.getElementById('split-to').max = _splitMax;
+    document.getElementById('split-info').textContent += ' — ' + _splitMax + ' page(s)';
+    document.getElementById('split-controls').style.display = 'block';
+  });
+}
+async function doSplit() {
+  const from = parseInt(document.getElementById('split-from').value);
+  const to = parseInt(document.getElementById('split-to').value);
+  const { PDFDocument } = PDFLib;
+  const src = await PDFDocument.load(await _splitFile.arrayBuffer(), { ignoreEncryption: true });
+  const out = await PDFDocument.create();
+  const indices = Array.from({ length: to - from + 1 }, (_, i) => from - 1 + i);
+  const pages = await out.copyPages(src, indices);
+  pages.forEach(p => out.addPage(p));
+  triggerDownload(await out.save(), 'pages_' + from + '_' + to + '.pdf');
+}
+
+// ─── IMG2PDF ───────────────────────────────────────────────────────────────────
+let _imgFiles = [];
+function imgAdd(input) {
+  Array.from(input.files).forEach(f => _imgFiles.push(f));
+  const list = document.getElementById('img-list');
+  list.innerHTML = '';
+  _imgFiles.forEach(f => {
+    const s = document.createElement('span');
+    s.style.cssText = 'background:#0d2137;border-radius:8px;padding:5px 10px;font-size:12px;color:#e0f2fe';
+    s.textContent = '🖼️ ' + f.name;
+    list.appendChild(s);
+  });
+  document.getElementById('img-btn').style.display = 'block';
+  document.getElementById('img-btn').textContent = 'Convertir ' + _imgFiles.length + ' image(s) en PDF';
+}
+async function doImg2Pdf() {
+  const btn = document.getElementById('img-btn');
+  btn.textContent = 'Conversion...'; btn.disabled = true;
+  const { PDFDocument } = PDFLib;
+  const pdf = await PDFDocument.create();
+  for (const f of _imgFiles) {
+    const buf = await f.arrayBuffer();
+    const img = f.type === 'image/jpeg' ? await pdf.embedJpg(buf) : await pdf.embedPng(buf);
+    const page = pdf.addPage([img.width, img.height]);
+    page.drawImage(img, { x:0, y:0, width:img.width, height:img.height });
+  }
+  triggerDownload(await pdf.save(), 'images.pdf');
+  btn.textContent = 'Convertir ' + _imgFiles.length + ' image(s) en PDF'; btn.disabled = false;
+}
+
+// ─── SIGN ──────────────────────────────────────────────────────────────────────
+let _signFile = null, _signPdfBytes = null, _signPages = [], _signCurrentPage = 0;
+let _sigImg = null, _sigPlacement = null, _savedSigs = [], _selectedSaved = null;
+let _sigColor = '#38bdf8', _sigMode = 'draw', _sigDrawing = false, _sigLastPos = null;
+
+function signStep(step) {
+  ['upload','create','place','done'].forEach(s => {
+    const el = document.getElementById('sign-' + s);
+    el.style.display = s === step ? (s === 'upload' ? 'block' : 'flex') : 'none';
+  });
+}
+
+async function signLoad(input) {
+  _signFile = input.files[0];
+  document.getElementById('sign-loading').style.display = 'block';
+  const buf = await _signFile.arrayBuffer();
+  _signPdfBytes = buf;
+  const pdf = await pdfjsLib.getDocument({ data: buf.slice() }).promise;
+  _signPages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const pg = await pdf.getPage(i);
+    const vp = pg.getViewport({ scale: 1.5 });
+    const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+    await pg.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    _signPages.push(c.toDataURL());
+  }
+  document.getElementById('sign-filename').textContent = '📎 ' + _signFile.name + ' — ' + _signPages.length + ' page(s)';
+  document.getElementById('sign-loading').style.display = 'none';
+  signStep('create');
+}
+
+function switchSigTab(tab, btn) {
+  document.querySelectorAll('#tool-sign .tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('sig-new-panel').style.display = tab === 'new' ? 'flex' : 'none';
+  document.getElementById('sig-saved-panel').style.display = tab === 'saved' ? 'flex' : 'none';
+  if (tab === 'saved') renderSavedSigs();
+}
+
+function setSigMode(mode) {
+  _sigMode = mode;
+  document.getElementById('btn-draw').classList.toggle('active', mode === 'draw');
+  document.getElementById('btn-type').classList.toggle('active', mode === 'type');
+  document.getElementById('draw-panel').style.display = mode === 'draw' ? 'block' : 'none';
+  document.getElementById('type-panel').style.display = mode === 'type' ? 'block' : 'none';
+}
+
+function setSigColor(color, dot) {
+  _sigColor = color;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+  if (dot) dot.classList.add('selected');
+  document.getElementById('typedSig').style.color = color;
+}
+
+// Canvas drawing
+const canvas = document.getElementById('sigCanvas');
+const ctx = canvas.getContext('2d');
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const sx = canvas.width / r.width, sy = canvas.height / r.height;
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  const cy = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (cx - r.left) * sx, y: (cy - r.top) * sy };
+}
+canvas.addEventListener('mousedown', e => { _sigDrawing = true; const p = getPos(e); _sigLastPos = p; ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+canvas.addEventListener('mousemove', e => {
+  if (!_sigDrawing) return;
+  const p = getPos(e);
+  ctx.beginPath(); ctx.moveTo(_sigLastPos.x, _sigLastPos.y); ctx.lineTo(p.x, p.y);
+  ctx.strokeStyle = _sigColor; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+  _sigLastPos = p;
+});
+canvas.addEventListener('mouseup', () => { _sigDrawing = false; });
+canvas.addEventListener('mouseleave', () => { _sigDrawing = false; });
+canvas.addEventListener('touchstart', e => { e.preventDefault(); _sigDrawing = true; const p = getPos(e); _sigLastPos = p; ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+canvas.addEventListener('touchmove', e => {
+  if (!_sigDrawing) return; e.preventDefault();
+  const p = getPos(e);
+  ctx.beginPath(); ctx.moveTo(_sigLastPos.x, _sigLastPos.y); ctx.lineTo(p.x, p.y);
+  ctx.strokeStyle = _sigColor; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+  _sigLastPos = p;
+}, { passive: false });
+canvas.addEventListener('touchend', () => { _sigDrawing = false; });
+function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+function buildSigImg() {
+  if (_sigMode === 'draw') return canvas.toDataURL('image/png');
+  const name = document.getElementById('typedSig').value.trim();
+  if (!name) return null;
+  const c = document.createElement('canvas'); c.width = 400; c.height = 100;
+  const cx = c.getContext('2d');
+  cx.font = 'italic 52px Georgia,serif'; cx.fillStyle = _sigColor;
+  cx.textAlign = 'center'; cx.textBaseline = 'middle';
+  cx.fillText(name, 200, 50);
+  return c.toDataURL('image/png');
+}
+
+function confirmSignature() {
+  const img = buildSigImg(); if (!img) return;
+  _sigImg = img; _sigPlacement = null;
+  buildPageBtns();
+  document.getElementById('pageImg').src = _signPages[_signCurrentPage];
+  document.getElementById('sigOverlay').src = img;
+  document.getElementById('sigOverlay').style.display = 'none';
+  document.getElementById('place-hint').style.display = 'none';
+  signStep('place');
+}
+
+function saveSignature() {
+  const img = buildSigImg(); if (!img) { alert('Crée d\'abord une signature'); return; }
+  const nameInput = document.getElementById('sigNameInput').value.trim();
+  const typed = document.getElementById('typedSig').value.trim();
+  const name = nameInput || (_sigMode === 'type' ? typed : 'Signature ' + (_savedSigs.length + 1));
+  _savedSigs.push({ id: Date.now(), name, img, type: _sigMode, createdAt: Date.now() });
+  localStorage.setItem('pdf_toolkit_sigs', JSON.stringify(_savedSigs));
+  document.getElementById('sigNameInput').value = '';
+  document.getElementById('saved-count').textContent = _savedSigs.length;
+  alert('✅ Signature "' + name + '" enregistrée !');
+}
+
+function renderSavedSigs() {
+  const stored = localStorage.getItem('pdf_toolkit_sigs');
+  if (stored) try { _savedSigs = JSON.parse(stored); } catch {}
+  document.getElementById('saved-count').textContent = _savedSigs.length;
+  const list = document.getElementById('saved-list');
+  if (!_savedSigs.length) { list.innerHTML = '<div class="empty-sigs">Aucune signature enregistrée</div>'; return; }
+  list.innerHTML = '';
+  _savedSigs.forEach(sig => {
+    const d = document.createElement('div');
+    d.className = 'saved-sig' + (_selectedSaved?.id === sig.id ? ' selected' : '');
+    d.innerHTML = '<img src="' + sig.img + '"><div class="info"><div class="name">' + sig.name + '</div><div class="meta">' + (sig.type==='draw'?'✏️ Dessinée':'⌨️ Tapée') + ' · ' + new Date(sig.createdAt).toLocaleDateString('fr-FR') + '</div></div>' + (_selectedSaved?.id===sig.id?'<span style="color:#38bdf8;font-size:17px">✓</span>':'') + '<button onclick="deleteSig('+sig.id+',event)" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:15px;padding:0 4px">🗑</button>';
+    d.onclick = () => { _selectedSaved = sig; renderSavedSigs(); document.getElementById('use-saved-btn').style.display = 'block'; };
+    list.appendChild(d);
+  });
+}
+
+function deleteSig(id, e) {
+  e.stopPropagation();
+  _savedSigs = _savedSigs.filter(s => s.id !== id);
+  localStorage.setItem('pdf_toolkit_sigs', JSON.stringify(_savedSigs));
+  if (_selectedSaved?.id === id) { _selectedSaved = null; document.getElementById('use-saved-btn').style.display = 'none'; }
+  renderSavedSigs();
+}
+
+function useSavedSig() {
+  if (!_selectedSaved) return;
+  _sigImg = _selectedSaved.img;
+  buildPageBtns();
+  document.getElementById('pageImg').src = _signPages[_signCurrentPage];
+  document.getElementById('sigOverlay').src = _sigImg;
+  document.getElementById('sigOverlay').style.display = 'none';
+  document.getElementById('place-hint').style.display = 'none';
+  signStep('place');
+}
+
+function buildPageBtns() {
+  const wrap = document.getElementById('page-btns');
+  wrap.innerHTML = '';
+  if (_signPages.length <= 1) return;
+  const lbl = document.createElement('span'); lbl.className = 'label'; lbl.textContent = 'Page :'; wrap.appendChild(lbl);
+  _signPages.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.textContent = i + 1; b.className = i === _signCurrentPage ? 'active' : '';
+    b.onclick = () => { _signCurrentPage = i; document.getElementById('pageImg').src = _signPages[i]; buildPageBtns(); _sigPlacement = null; document.getElementById('sigOverlay').style.display = 'none'; };
+    wrap.appendChild(b);
+  });
+}
+
+function placeSig(e) {
+  const wrap = document.getElementById('previewWrap');
+  const r = wrap.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width) * 100;
+  const y = ((e.clientY - r.top) / r.height) * 100;
+  _sigPlacement = { x, y };
+  const ov = document.getElementById('sigOverlay');
+  ov.style.display = 'block'; ov.style.left = x + '%'; ov.style.top = y + '%';
+  document.getElementById('place-hint').style.display = 'block';
+}
+
+async function applySignature() {
+  if (!_sigPlacement) { alert('Clique sur la page pour placer ta signature'); return; }
+  const btn = document.getElementById('apply-btn');
+  btn.textContent = 'Application...'; btn.disabled = true;
+  const { PDFDocument } = PDFLib;
+  const pdf = await PDFDocument.load(_signPdfBytes.slice(), { ignoreEncryption: true });
+  const page = pdf.getPages()[_signCurrentPage];
+  const { width, height } = page.getSize();
+  const base64 = _sigImg.split(',')[1];
+  const imgBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  const pngImg = await pdf.embedPng(imgBytes);
+  const sigW = width * 0.28, sigH = sigW * (pngImg.height / pngImg.width);
+  page.drawImage(pngImg, { x: (_sigPlacement.x/100)*width - sigW/2, y: height - (_sigPlacement.y/100)*height - sigH/2, width: sigW, height: sigH });
+  const bytes = await pdf.save();
+  triggerDownload(bytes, 'signe_' + _signFile.name);
+  btn.textContent = '⬇️ Télécharger le PDF signé'; btn.disabled = false;
+  signStep('done');
+}
+
+function signReset() {
+  _signFile = null; _signPdfBytes = null; _signPages = []; _signCurrentPage = 0;
+  _sigImg = null; _sigPlacement = null; _selectedSaved = null;
+  document.getElementById('f-sign').value = '';
+  clearCanvas();
+  document.getElementById('typedSig').value = '';
+  signStep('upload');
+}
+
+// ─── PDF2WORD ──────────────────────────────────────────────────────────────────
+let _pdf2wordWarned = false, _pdf2wordFile = null;
+function pdf2wordClick() { document.getElementById('f-pdf2word').click(); }
+function pdf2wordDrop(e, el) { dzLeave(el); e.preventDefault(); const dt = new DataTransfer(); Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f)); document.getElementById('f-pdf2word').files = dt.files; pdf2wordLoad({ files: dt.files }); }
+function pdf2wordLoad(input) {
+  _pdf2wordFile = input.files[0];
+  if (!_pdf2wordWarned) { document.getElementById('warn-modal').classList.add('show'); return; }
+  showPdf2WordFile();
+}
+function showPdf2WordFile() {
+  document.getElementById('pdf2word-info').textContent = '📎 ' + _pdf2wordFile.name;
+  document.getElementById('pdf2word-info').style.display = 'block';
+  document.getElementById('pdf2word-btn').style.display = 'block';
+}
+function closeWarnModal() { document.getElementById('warn-modal').classList.remove('show'); _pdf2wordFile = null; }
+function acceptWarn() { _pdf2wordWarned = true; document.getElementById('warn-modal').classList.remove('show'); showPdf2WordFile(); }
+function doPdf2Word() { alert('⚠️ Pour activer cette fonctionnalité, connecte une clé API iLovePDF dans le code.'); }
+</script>
+</body>
+</html>
