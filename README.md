@@ -7,8 +7,6 @@ Application de gestion de PDFs packagée avec Electron. Compresser, fusionner, d
 - **Node.js** 18+ → [nodejs.org](https://nodejs.org)
 - **npm** (inclus avec Node.js)
 
-TEST
-
 ## Installation
 
 ```bash
