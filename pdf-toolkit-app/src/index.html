@@ -3,125 +3,565 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https:; font-src 'self'"/>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https:; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"/>
   <title>PDF Toolkit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    /* ─── RESET & BASE ─────────────────────────────────────────────── */
     html, body { height: 100%; overflow-x: hidden; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #020c1b; color: #e0f2fe; font-family: system-ui, sans-serif; min-height: 100vh; padding: 24px 16px; }
-    .container { max-width: 620px; margin: 0 auto; }
-    .header { text-align: center; margin-bottom: 28px; }
-    .header h1 { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #38bdf8, #1d4ed8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .header p { color: #64b5d6; font-size: 12px; margin-top: 5px; }
-    .nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; justify-content: center; }
-    .nav button { padding: 9px 13px; border-radius: 10px; border: 1px solid #1a3a5c; cursor: pointer; font-weight: 600; font-size: 12px; background: #0a1929; color: #64b5d6; transition: all .2s; }
-    .nav button.active { background: #1565c0; color: #fff; border-color: #38bdf8; box-shadow: 0 0 16px #1976d233; }
-    .card { background: #0d2137; border-radius: 16px; padding: 22px; border: 1px solid #1a3a5c; box-shadow: 0 4px 32px #00000066; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-    .card-header h2 { font-size: 16px; color: #e0f2fe; }
-    .badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
-    .badge.local { background: #0c4a6e; color: #38bdf8; }
-    .badge.external { background: #451a03; color: #fbbf24; }
-    .tool { display: none; flex-direction: column; gap: 14px; }
+    body {
+      background: #050a18;
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 32px 20px;
+      position: relative;
+    }
+    /* Gradient orbs en arrière-plan */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -120px; left: -80px;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #1d4ed822 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -100px; right: -60px;
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, #7c3aed18 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .container { max-width: 660px; margin: 0 auto; position: relative; z-index: 1; }
+
+    /* ─── HEADER ────────────────────────────────────────────────────── */
+    .header { text-align: center; margin-bottom: 36px; }
+    .header .logo {
+      width: 56px; height: 56px;
+      margin: 0 auto 14px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 8px 32px #3b82f640;
+    }
+    .header h1 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #60a5fa 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% center; }
+      50% { background-position: 200% center; }
+    }
+    .header .subtitle {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-top: 6px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+    .header .byline {
+      color: #60a5fa;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 4px;
+      opacity: 0.8;
+    }
+
+    /* ─── NAV ───────────────────────────────────────────────────────── */
+    .nav {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 24px; justify-content: center;
+    }
+    .nav button {
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12.5px;
+      font-family: inherit;
+      background: #0f172a;
+      color: #94a3b8;
+      transition: all .25s cubic-bezier(.4,0,.2,1);
+      letter-spacing: 0.2px;
+    }
+    .nav button:hover {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-color: #334155;
+      transform: translateY(-1px);
+    }
+    .nav button.active {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 20px #3b82f640, inset 0 1px 0 #ffffff18;
+    }
+
+    /* ─── CARD (glassmorphism) ──────────────────────────────────────── */
+    .card {
+      background: linear-gradient(160deg, #0f172acc 0%, #1e293b66 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 28px;
+      border: 1px solid #ffffff0a;
+      box-shadow: 0 8px 48px #00000060, inset 0 1px 0 #ffffff06;
+    }
+    .card-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 22px;
+    }
+    .card-header h2 { font-size: 17px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.2px; }
+
+    /* ─── BADGE ─────────────────────────────────────────────────────── */
+    .badge {
+      font-size: 11px; padding: 4px 10px;
+      border-radius: 99px; font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .badge.local {
+      background: linear-gradient(135deg, #0c4a6e44, #06495844);
+      color: #38bdf8;
+      border: 1px solid #0ea5e930;
+    }
+    .badge.external {
+      background: #451a0333;
+      color: #fbbf24;
+      border: 1px solid #f59e0b30;
+    }
+
+    /* ─── TOOLS ─────────────────────────────────────────────────────── */
+    .tool { display: none; flex-direction: column; gap: 16px; }
     .tool.active { display: flex; }
-    .dropzone { border: 2px dashed #1a3a5c; border-radius: 12px; padding: 28px 16px; text-align: center; cursor: pointer; background: #0a1929; transition: all .2s; color: #64b5d6; }
-    .dropzone:hover, .dropzone.drag { border-color: #38bdf8; background: #0a1929cc; }
-    .dropzone .icon { font-size: 30px; margin-bottom: 8px; }
-    .dropzone p { font-size: 13px; }
-    .btn { padding: 11px; border-radius: 10px; border: none; background: #1976d2; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; width: 100%; transition: background .2s; }
-    .btn:disabled { background: #1a3a5c; cursor: default; }
-    .btn.success { background: #0e7490; }
-    .btn.warn { background: #fbbf24; color: #000; }
-    .btn.secondary { background: #0d2137; border: 1px solid #1a3a5c; color: #64b5d6; }
-    .result-box { background: #0e749022; border: 1px solid #0ea5e9; border-radius: 10px; padding: 14px; }
-    .result-box .title { color: #38bdf8; font-weight: 700; margin-bottom: 4px; }
-    .result-box .info { color: #64b5d6; font-size: 13px; }
-    .file-tag { display: flex; justify-content: space-between; align-items: center; background: #0d2137; border-radius: 8px; padding: 8px 12px; }
-    .file-tag span { color: #e0f2fe; font-size: 13px; }
-    .file-tag button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 15px; }
-    .warn-box { background: #451a0322; border: 1px solid #f59e0b; border-radius: 10px; padding: 12px; color: #fbbf24; font-size: 13px; }
-    input[type="number"], input[type="text"] { padding: 8px 10px; border-radius: 8px; border: 1px solid #1a3a5c; background: #0a1929; color: #e0f2fe; font-size: 14px; }
-    input[type="number"] { width: 64px; text-align: center; }
+
+    /* ─── DROPZONE ──────────────────────────────────────────────────── */
+    .dropzone {
+      border: 2px dashed #1e293b;
+      border-radius: 16px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: #0f172a66;
+      transition: all .3s cubic-bezier(.4,0,.2,1);
+      color: #94a3b8;
+      position: relative;
+      overflow: hidden;
+    }
+    .dropzone::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #3b82f608, #8b5cf608);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .dropzone:hover::before, .dropzone.drag::before { opacity: 1; }
+    .dropzone:hover, .dropzone.drag {
+      border-color: #3b82f660;
+      background: #0f172a99;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px #3b82f615;
+    }
+    .dropzone .icon { font-size: 36px; margin-bottom: 10px; position: relative; z-index: 1; }
+    .dropzone p { font-size: 13px; font-weight: 500; position: relative; z-index: 1; }
+
+    /* ─── BUTTONS ───────────────────────────────────────────────────── */
+    .btn {
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      font-family: inherit;
+      width: 100%;
+      transition: all .25s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 4px 16px #3b82f630;
+      letter-spacing: 0.2px;
+    }
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px #3b82f650;
+    }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled {
+      background: #1e293b;
+      color: #475569;
+      cursor: default;
+      box-shadow: none;
+    }
+    .btn.success {
+      background: linear-gradient(135deg, #0d9488, #0891b2);
+      box-shadow: 0 4px 16px #0d948830;
+    }
+    .btn.warn { background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; }
+    .btn.secondary {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      color: #94a3b8;
+      box-shadow: none;
+    }
+    .btn.secondary:hover:not(:disabled) {
+      background: #1e293b;
+      color: #e2e8f0;
+      box-shadow: none;
+    }
+
+    /* ─── RESULT BOX ───────────────────────────────────────────────── */
+    .result-box {
+      background: linear-gradient(135deg, #0d948815, #0891b210);
+      border: 1px solid #0d948830;
+      border-radius: 14px;
+      padding: 18px;
+    }
+    .result-box .title { color: #2dd4bf; font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+    .result-box .info { color: #94a3b8; font-size: 13px; line-height: 1.5; }
+
+    /* ─── FILE TAG ──────────────────────────────────────────────────── */
+    .file-tag {
+      display: flex; justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 10px 14px;
+      transition: all .2s;
+    }
+    .file-tag:hover { border-color: #334155; }
+    .file-tag span { color: #e2e8f0; font-size: 13px; font-weight: 500; }
+    .file-tag button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 15px; opacity: 0.7; transition: opacity .2s; }
+    .file-tag button:hover { opacity: 1; }
+
+    /* ─── INPUTS ────────────────────────────────────────────────────── */
+    .warn-box {
+      background: #451a0315;
+      border: 1px solid #f59e0b25;
+      border-radius: 12px;
+      padding: 14px;
+      color: #fbbf24;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    input[type="number"], input[type="text"] {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #1e293b;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color .2s;
+    }
+    input[type="number"]:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: #3b82f680;
+      box-shadow: 0 0 0 3px #3b82f615;
+    }
+    input[type="number"] { width: 68px; text-align: center; }
     .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .label { color: #64b5d6; font-size: 13px; }
-    /* SIGN */
-    .tabs { display: flex; gap: 2px; background: #0a1929; border-radius: 10px; padding: 4px; }
-    .tabs button { flex: 1; padding: 8px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; cursor: pointer; background: transparent; color: #64b5d6; }
-    .tabs button.active { background: #1976d2; color: #fff; }
+    .label { color: #94a3b8; font-size: 13px; font-weight: 500; }
+
+    /* ─── SIGN: TABS ───────────────────────────────────────────────── */
+    .tabs {
+      display: flex; gap: 4px;
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid #1e293b;
+    }
+    .tabs button {
+      flex: 1; padding: 9px;
+      border-radius: 9px; border: none;
+      font-weight: 700; font-size: 12px;
+      cursor: pointer;
+      background: transparent;
+      color: #94a3b8;
+      font-family: inherit;
+      transition: all .2s;
+    }
+    .tabs button:hover { color: #e2e8f0; }
+    .tabs button.active {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: #fff;
+      box-shadow: 0 2px 8px #3b82f630;
+    }
     .mode-btns { display: flex; gap: 8px; }
-    .mode-btns button { flex: 1; padding: 9px; border-radius: 8px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; background: #0d2137; color: #64b5d6; }
-    .mode-btns button.active { background: #1976d2; color: #fff; }
-    canvas#sigCanvas { background: #0a1929; border-radius: 10px; border: 1px solid #1a3a5c; cursor: crosshair; width: 100%; touch-action: none; display: block; }
-    #typedSig { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #1a3a5c; background: #0a1929; font-size: 26px; font-style: italic; font-family: Georgia, serif; }
+    .mode-btns button {
+      flex: 1; padding: 10px;
+      border-radius: 10px; border: 1px solid #1e293b;
+      font-weight: 700; font-size: 13px;
+      cursor: pointer;
+      background: #0f172a;
+      color: #94a3b8;
+      font-family: inherit;
+      transition: all .2s;
+    }
+    .mode-btns button:hover { border-color: #334155; color: #e2e8f0; }
+    .mode-btns button.active {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 2px 8px #3b82f630;
+    }
+
+    /* ─── SIGN: CANVAS & TYPED ─────────────────────────────────────── */
+    canvas#sigCanvas {
+      background: #0f172a;
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      cursor: crosshair;
+      width: 100%;
+      touch-action: none;
+      display: block;
+    }
+    #typedSig {
+      width: 100%; padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      background: #0f172a;
+      font-size: 26px;
+      font-style: italic;
+      font-family: Georgia, serif;
+      color: #38bdf8;
+    }
     .color-picker { display: flex; gap: 8px; align-items: center; }
-    .color-picker span { color: #64b5d6; font-size: 12px; }
-    .color-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border .15s; flex-shrink: 0; }
-    .color-dot.selected { border-color: #fff; }
-    .saved-sig { display: flex; align-items: center; gap: 10px; background: #0a1929; border: 1px solid #1a3a5c; border-radius: 10px; padding: 8px 12px; cursor: pointer; transition: all .15s; }
-    .saved-sig.selected { background: #0a2744; border-color: #38bdf8; }
-    .saved-sig img { height: 34px; max-width: 110px; object-fit: contain; background: #0d2137; border-radius: 6px; padding: 4px; }
+    .color-picker span { color: #94a3b8; font-size: 12px; font-weight: 500; }
+    .color-dot {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+    .color-dot:hover { transform: scale(1.15); }
+    .color-dot.selected { border-color: #fff; box-shadow: 0 0 8px #ffffff40; }
+
+    /* ─── SIGN: SAVED SIGS ─────────────────────────────────────────── */
+    .saved-sig {
+      display: flex; align-items: center; gap: 12px;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .saved-sig:hover { border-color: #334155; background: #1e293b40; }
+    .saved-sig.selected {
+      background: linear-gradient(135deg, #1e3a5f20, #3b82f610);
+      border-color: #3b82f650;
+    }
+    .saved-sig img {
+      height: 36px; max-width: 110px;
+      object-fit: contain;
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 4px;
+    }
     .saved-sig .info { flex: 1; }
-    .saved-sig .info .name { color: #e0f2fe; font-size: 13px; font-weight: 600; }
-    .saved-sig .info .meta { color: #64b5d6; font-size: 11px; }
+    .saved-sig .info .name { color: #e2e8f0; font-size: 13px; font-weight: 600; }
+    .saved-sig .info .meta { color: #64748b; font-size: 11px; }
     .save-row { display: flex; gap: 8px; }
     .save-row input { flex: 1; }
-    .save-btn { padding: 9px 14px; border-radius: 8px; border: none; background: #0c4a6e; color: #38bdf8; cursor: pointer; font-weight: 700; font-size: 13px; white-space: nowrap; }
-    #previewWrap { position: relative; cursor: crosshair; border-radius: 10px; overflow: hidden; border: 1px solid #1a3a5c; }
+    .save-btn {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid #1e293b;
+      background: #0f172a;
+      color: #60a5fa;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: all .2s;
+    }
+    .save-btn:hover { background: #1e293b; border-color: #3b82f650; }
+
+    /* ─── SIGN: PREVIEW ────────────────────────────────────────────── */
+    #previewWrap {
+      position: relative; cursor: crosshair;
+      border-radius: 14px; overflow: hidden;
+      border: 1px solid #1e293b;
+      box-shadow: 0 4px 24px #00000040;
+    }
     #previewWrap img#pageImg { width: 100%; display: block; }
-    #sigOverlay { position: absolute; transform: translate(-50%,-50%); width: 28%; opacity: 0.9; pointer-events: none; display: none; }
+    #sigOverlay {
+      position: absolute;
+      transform: translate(-50%,-50%);
+      width: 28%; opacity: 0.9;
+      pointer-events: none;
+      display: none;
+    }
     .page-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-    .page-btns button { padding: 4px 10px; border-radius: 6px; border: none; background: #0d2137; color: #64b5d6; cursor: pointer; font-weight: 700; }
-    .page-btns button.active { background: #1976d2; color: #fff; }
-    /* MODAL */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: #000000cc; align-items: center; justify-content: center; z-index: 200; }
+    .page-btns button {
+      padding: 5px 12px;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+      background: #0f172a;
+      color: #94a3b8;
+      cursor: pointer;
+      font-weight: 700;
+      font-family: inherit;
+      transition: all .2s;
+    }
+    .page-btns button:hover { border-color: #334155; color: #e2e8f0; }
+    .page-btns button.active {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    /* ─── MODAL ─────────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: #000000dd;
+      backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+      z-index: 200;
+    }
     .modal-overlay.show { display: flex; }
-    .modal { background: #0d2137; border-radius: 16px; padding: 28px; max-width: 420px; width: 90%; border: 1px solid #1e4976; box-shadow: 0 0 40px #1976d233; }
-    .modal h3 { color: #38bdf8; text-align: center; margin-bottom: 6px; font-size: 16px; }
-    .modal p { color: #64b5d6; font-size: 13px; text-align: center; margin-bottom: 16px; }
-    .modal .filename-row { display: flex; align-items: center; background: #0a1929; border: 1px solid #1a3a5c; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
-    .modal .filename-row input { flex: 1; padding: 11px 14px; background: transparent; border: none; color: #e0f2fe; font-size: 15px; outline: none; }
-    .modal .filename-row span { padding: 0 14px; color: #64b5d6; font-size: 14px; border-left: 1px solid #1a3a5c; }
+    .modal {
+      background: linear-gradient(160deg, #0f172aee, #1e293bee);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 440px; width: 90%;
+      border: 1px solid #ffffff0a;
+      box-shadow: 0 24px 64px #00000080, inset 0 1px 0 #ffffff06;
+    }
+    .modal h3 { color: #f1f5f9; text-align: center; margin-bottom: 8px; font-size: 18px; font-weight: 700; }
+    .modal p { color: #94a3b8; font-size: 13px; text-align: center; margin-bottom: 20px; }
+    .modal .filename-row {
+      display: flex; align-items: center;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .modal .filename-row input {
+      flex: 1; padding: 12px 16px;
+      background: transparent; border: none;
+      color: #e2e8f0; font-size: 15px;
+      outline: none; font-family: inherit;
+    }
+    .modal .filename-row span {
+      padding: 0 16px;
+      color: #64748b;
+      font-size: 14px;
+      border-left: 1px solid #1e293b;
+      font-weight: 500;
+    }
     .modal .modal-btns { display: flex; gap: 10px; }
-    .modal .modal-btns button { flex: 1; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 700; }
-    .modal .modal-btns .cancel { border: 1px solid #1a3a5c; background: transparent; color: #64b5d6; }
-    .modal .modal-btns .confirm { border: none; background: #1976d2; color: #fff; font-size: 15px; }
-    /* WARN MODAL */
-    .warn-modal { border-color: #f59e0b; }
+    .modal .modal-btns button {
+      flex: 1; padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-family: inherit;
+      transition: all .2s;
+    }
+    .modal .modal-btns .cancel {
+      border: 1px solid #1e293b;
+      background: transparent;
+      color: #94a3b8;
+    }
+    .modal .modal-btns .cancel:hover { background: #1e293b; color: #e2e8f0; }
+    .modal .modal-btns .confirm {
+      border: none;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: #fff;
+      font-size: 15px;
+      box-shadow: 0 4px 16px #3b82f630;
+    }
+    .modal .modal-btns .confirm:hover { box-shadow: 0 6px 24px #3b82f650; }
+
+    /* ─── WARN MODAL ───────────────────────────────────────────────── */
+    .warn-modal { border-color: #f59e0b20; }
     .warn-modal h3 { color: #fbbf24; }
-    .warn-modal .confirm { background: #fbbf24; color: #000; }
-    .footer { text-align: center; color: #2a5278; font-size: 11px; margin-top: 16px; }
-    .success-msg { font-size: 12px; color: #0ea5e9; text-align: center; }
-    .empty-sigs { color: #2a5278; font-size: 12px; text-align: center; padding: 14px; background: #0a1929; border-radius: 10px; border: 1px dashed #1a3a5c; }
-    .done-screen { text-align: center; padding: 24px; }
-    .done-screen .icon { font-size: 46px; margin-bottom: 10px; }
-    .done-screen h3 { color: #38bdf8; font-size: 16px; margin-bottom: 6px; }
-    .done-screen p { color: #64b5d6; font-size: 13px; margin-bottom: 18px; }
+    .warn-modal .confirm { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+
+    /* ─── FOOTER ────────────────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      color: #334155;
+      font-size: 11px;
+      margin-top: 24px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── MISC ──────────────────────────────────────────────────────── */
+    .success-msg { font-size: 12px; color: #60a5fa; text-align: center; }
+    .empty-sigs {
+      color: #475569;
+      font-size: 12px;
+      text-align: center;
+      padding: 20px;
+      background: #0f172a;
+      border-radius: 12px;
+      border: 1px dashed #1e293b;
+    }
+    .done-screen { text-align: center; padding: 32px; }
+    .done-screen .icon { font-size: 52px; margin-bottom: 12px; }
+    .done-screen h3 { color: #f1f5f9; font-size: 18px; margin-bottom: 8px; font-weight: 700; }
+    .done-screen p { color: #94a3b8; font-size: 14px; margin-bottom: 24px; }
+
+    /* ─── SCROLLBAR ─────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    /* ─── SELECTION ─────────────────────────────────────────────────── */
+    ::selection { background: #3b82f640; color: #fff; }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <div style="font-size:38px;margin-bottom:6px">📄</div>
+    <div class="logo">📄</div>
     <h1>PDF Toolkit</h1>
-    <p style="color:#38bdf8;font-size:13px;font-style:italic;margin-top:2px">by Nicodinho</p>
-    <p>Vos fichiers restent sur votre appareil 🔒</p>
+    <div class="byline">by Nicodinho</div>
+    <p class="subtitle">Vos fichiers restent sur votre appareil</p>
   </div>
 
   <div class="nav">
-    <button class="active" onclick="switchTool('compress',this)">📉 Compression PDF</button>
-    <button onclick="switchTool('merge',this)">📑 Fusionner des PDFs</button>
-    <button onclick="switchTool('split',this)">✂️ Découper un PDF</button>
+    <button class="active" onclick="switchTool('compress',this)">📉 Compresser</button>
+    <button onclick="switchTool('merge',this)">📑 Fusionner</button>
+    <button onclick="switchTool('split',this)">✂️ Découper</button>
     <button onclick="switchTool('img2pdf',this)">🖼️ Image → PDF</button>
-    <button onclick="switchTool('sign',this)">✍️ Signer un PDF</button>
+    <button onclick="switchTool('sign',this)">✍️ Signer</button>
     <button onclick="switchTool('pdf2word',this)">📄 PDF → Word</button>
   </div>
 
   <div class="card">
     <div class="card-header">
       <h2 id="toolTitle">📉 Compression PDF</h2>
-      <span class="badge local" id="toolBadge">🔒 100% Local</span>
+      <span class="badge local" id="toolBadge">100% Local</span>
     </div>
 
     <!-- COMPRESS -->
@@ -130,11 +570,11 @@
         <div class="icon">📂</div><p>Glisse ton PDF ici ou clique pour sélectionner</p>
       </div>
       <input type="file" id="f-compress" accept=".pdf" style="display:none" onchange="compressLoad(this)">
-      <div id="compress-info" style="display:none;color:#7dd3fc;font-size:13px"></div>
+      <div id="compress-info" style="display:none;color:#94a3b8;font-size:13px;font-weight:500"></div>
       <div id="compress-result" style="display:none" class="result-box">
-        <div class="title">✅ Compression terminée</div>
+        <div class="title">Compression terminée</div>
         <div class="info" id="compress-stats"></div>
-        <button class="btn success" style="margin-top:10px;width:auto;padding:8px 18px" onclick="triggerDownload(window._compressBytes,'compresse_'+window._compressName)">⬇️ Télécharger</button>
+        <button class="btn success" style="margin-top:12px;width:auto;padding:10px 20px" onclick="triggerDownload(window._compressBytes,'compresse_'+window._compressName)">Télécharger</button>
       </div>
       <button class="btn" id="compress-btn" style="display:none" onclick="doCompress()">Compresser</button>
     </div>
@@ -145,7 +585,7 @@
         <div class="icon">📂</div><p>Glisse tes PDFs ici (plusieurs à la fois)</p>
       </div>
       <input type="file" id="f-merge" accept=".pdf" multiple style="display:none" onchange="mergeAdd(this)">
-      <div id="merge-list"></div>
+      <div id="merge-list" style="display:flex;flex-direction:column;gap:6px"></div>
       <button class="btn" id="merge-btn" style="display:none" onclick="doMerge()">Fusionner</button>
     </div>
 
@@ -155,9 +595,9 @@
         <div class="icon">📂</div><p>Glisse ton PDF ici</p>
       </div>
       <input type="file" id="f-split" accept=".pdf" style="display:none" onchange="splitLoad(this)">
-      <div id="split-info" style="display:none;color:#7dd3fc;font-size:13px"></div>
+      <div id="split-info" style="display:none;color:#94a3b8;font-size:13px;font-weight:500"></div>
       <div id="split-controls" style="display:none">
-        <div class="row" style="margin-bottom:14px">
+        <div class="row" style="margin-bottom:16px">
           <span class="label">De la page</span>
           <input type="number" id="split-from" value="1" min="1">
           <span class="label">à</span>
@@ -179,73 +619,67 @@
 
     <!-- SIGN -->
     <div class="tool" id="tool-sign">
-      <!-- Step: upload -->
       <div id="sign-upload">
         <div class="dropzone" onclick="document.getElementById('f-sign').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-sign')">
           <div class="icon">📂</div><p>Glisse ton PDF à signer ici</p>
         </div>
         <input type="file" id="f-sign" accept=".pdf" style="display:none" onchange="signLoad(this)">
-        <div id="sign-loading" style="display:none;color:#38bdf8;text-align:center;font-size:13px">Chargement du PDF...</div>
+        <div id="sign-loading" style="display:none;color:#60a5fa;text-align:center;font-size:13px;font-weight:500">Chargement du PDF...</div>
       </div>
-      <!-- Step: create sig -->
       <div id="sign-create" style="display:none;flex-direction:column;gap:14px">
-        <div style="color:#7dd3fc;font-size:13px" id="sign-filename"></div>
+        <div style="color:#94a3b8;font-size:13px;font-weight:500" id="sign-filename"></div>
         <div class="tabs">
-          <button class="active" onclick="switchSigTab('new',this)">✏️ Nouvelle signature</button>
-          <button onclick="switchSigTab('saved',this)">📁 Enregistrées (<span id="saved-count">0</span>)</button>
+          <button class="active" onclick="switchSigTab('new',this)">Nouvelle signature</button>
+          <button onclick="switchSigTab('saved',this)">Enregistrées (<span id="saved-count">0</span>)</button>
         </div>
-        <!-- New sig -->
         <div id="sig-new-panel" style="display:flex;flex-direction:column;gap:12px">
           <div class="mode-btns">
-            <button class="active" id="btn-draw" onclick="setSigMode('draw')">✏️ Dessiner</button>
-            <button id="btn-type" onclick="setSigMode('type')">⌨️ Taper</button>
+            <button class="active" id="btn-draw" onclick="setSigMode('draw')">Dessiner</button>
+            <button id="btn-type" onclick="setSigMode('type')">Taper</button>
           </div>
           <div class="color-picker">
             <span>Couleur :</span>
             <div class="color-dot selected" style="background:#38bdf8" onclick="setSigColor('#38bdf8',this)"></div>
-            <div class="color-dot" style="background:#1976d2" onclick="setSigColor('#1976d2',this)"></div>
+            <div class="color-dot" style="background:#6366f1" onclick="setSigColor('#6366f1',this)"></div>
             <div class="color-dot" style="background:#34d399" onclick="setSigColor('#34d399',this)"></div>
             <div class="color-dot" style="background:#f87171" onclick="setSigColor('#f87171',this)"></div>
             <div class="color-dot" style="background:#fbbf24" onclick="setSigColor('#fbbf24',this)"></div>
-            <div class="color-dot" style="background:#000000" onclick="setSigColor('#000000',this)"></div>
-            <input type="color" value="#38bdf8" onchange="setSigColor(this.value,null)" style="width:22px;height:22px;border-radius:50%;border:none;padding:0;cursor:pointer">
+            <div class="color-dot" style="background:#e2e8f0" onclick="setSigColor('#e2e8f0',this)"></div>
+            <input type="color" value="#38bdf8" onchange="setSigColor(this.value,null)" style="width:24px;height:24px;border-radius:50%;border:none;padding:0;cursor:pointer">
           </div>
           <div id="draw-panel">
-            <div style="font-size:12px;color:#64b5d6;margin-bottom:6px">Dessine ta signature :</div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:8px;font-weight:500">Dessine ta signature :</div>
             <canvas id="sigCanvas" width="600" height="180"></canvas>
-            <button onclick="clearCanvas()" style="margin-top:6px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px">🗑 Effacer</button>
+            <button onclick="clearCanvas()" style="margin-top:8px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit">Effacer</button>
           </div>
           <div id="type-panel" style="display:none">
-            <div style="font-size:12px;color:#64b5d6;margin-bottom:6px">Tape ton nom :</div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:8px;font-weight:500">Tape ton nom :</div>
             <input type="text" id="typedSig" placeholder="ex : Nicodème Dupont">
           </div>
           <div class="save-row">
             <input type="text" id="sigNameInput" placeholder="Nom de la signature (optionnel)" style="flex:1">
-            <button class="save-btn" onclick="saveSignature()">💾 Enregistrer</button>
+            <button class="save-btn" onclick="saveSignature()">Enregistrer</button>
           </div>
-          <button class="btn" onclick="confirmSignature()">Placer sur le PDF →</button>
+          <button class="btn" onclick="confirmSignature()">Placer sur le PDF</button>
         </div>
-        <!-- Saved sigs -->
         <div id="sig-saved-panel" style="display:none;flex-direction:column;gap:10px">
           <div id="saved-list"></div>
-          <button class="btn" id="use-saved-btn" style="display:none" onclick="useSavedSig()">Utiliser cette signature →</button>
+          <button class="btn" id="use-saved-btn" style="display:none" onclick="useSavedSig()">Utiliser cette signature</button>
         </div>
       </div>
-      <!-- Step: place -->
       <div id="sign-place" style="display:none;flex-direction:column;gap:14px">
         <div class="page-btns" id="page-btns"></div>
-        <div style="font-size:13px;color:#64b5d6">👆 Clique sur la page pour placer ta signature</div>
+        <div style="font-size:13px;color:#94a3b8;font-weight:500">Clique sur la page pour placer ta signature</div>
         <div id="previewWrap" onclick="placeSig(event)">
           <img id="pageImg" src="" alt="page">
           <img id="sigOverlay" src="" alt="sig">
         </div>
-        <div id="place-hint" style="display:none;font-size:12px;color:#0ea5e9;text-align:center">✅ Clique ailleurs pour repositionner</div>
+        <div id="place-hint" style="display:none;font-size:12px;color:#60a5fa;text-align:center;font-weight:500">Clique ailleurs pour repositionner</div>
         <div class="row">
-          <button class="btn secondary" style="flex:1" onclick="signStep('create')">← Modifier</button>
-          <button class="btn" style="flex:2" id="apply-btn" onclick="applySignature()">⬇️ Télécharger le PDF signé</button>
+          <button class="btn secondary" style="flex:1" onclick="signStep('create')">Modifier</button>
+          <button class="btn" style="flex:2" id="apply-btn" onclick="applySignature()">Télécharger le PDF signé</button>
         </div>
       </div>
-      <!-- Step: done -->
       <div id="sign-done" style="display:none" class="done-screen">
         <div class="icon">✅</div>
         <h3>PDF signé téléchargé !</h3>
@@ -256,34 +690,34 @@
 
     <!-- PDF2WORD -->
     <div class="tool" id="tool-pdf2word">
-      <div id="pdf2word-status" style="display:none;border-radius:10px;padding:12px;font-size:13px;margin-bottom:8px"></div>
+      <div id="pdf2word-status" style="display:none;border-radius:12px;padding:14px;font-size:13px;margin-bottom:8px;font-weight:500"></div>
       <div class="dropzone" onclick="pdf2wordClick()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="pdf2wordDrop(event,this)">
         <div class="icon">📂</div><p>Glisse ton PDF ici</p>
       </div>
       <input type="file" id="f-pdf2word" accept=".pdf" style="display:none" onchange="pdf2wordLoad(this)">
-      <div id="pdf2word-info" style="display:none;color:#7dd3fc;font-size:13px"></div>
+      <div id="pdf2word-info" style="display:none;color:#94a3b8;font-size:13px;font-weight:500"></div>
       <div id="pdf2word-progress" style="display:none;flex-direction:column;gap:8px">
-        <div style="background:#0a1929;border-radius:8px;height:6px;overflow:hidden">
-          <div id="pdf2word-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#38bdf8,#1976d2);border-radius:8px;transition:width .4s ease"></div>
+        <div style="background:#0f172a;border-radius:8px;height:6px;overflow:hidden;border:1px solid #1e293b">
+          <div id="pdf2word-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);border-radius:8px;transition:width .4s ease"></div>
         </div>
-        <div id="pdf2word-progress-text" style="color:#64b5d6;font-size:12px;text-align:center"></div>
+        <div id="pdf2word-progress-text" style="color:#94a3b8;font-size:12px;text-align:center;font-weight:500"></div>
       </div>
       <button class="btn" id="pdf2word-btn" style="display:none" onclick="doPdf2Word()">Convertir en Word</button>
       <div id="pdf2word-result" style="display:none" class="result-box">
-        <div class="title">✅ Conversion terminée</div>
+        <div class="title">Conversion terminée</div>
         <div class="info" id="pdf2word-stats"></div>
-        <button class="btn success" style="margin-top:10px;width:auto;padding:8px 18px" id="pdf2word-dl-btn">⬇️ Télécharger le .docx</button>
+        <button class="btn success" style="margin-top:12px;width:auto;padding:10px 20px" id="pdf2word-dl-btn">Télécharger le .docx</button>
       </div>
     </div>
   </div>
 
-  <p class="footer">PDF Toolkit — 100% local • Aucune donnée envoyée</p>
+  <p class="footer">PDF TOOLKIT — 100% LOCAL • AUCUNE DONNÉE ENVOYÉE</p>
 </div>
 
 <!-- DOWNLOAD MODAL -->
 <div class="modal-overlay" id="dl-modal">
   <div class="modal">
-    <div style="font-size:32px;text-align:center;margin-bottom:10px">💾</div>
+    <div style="font-size:36px;text-align:center;margin-bottom:12px">💾</div>
     <h3>Nom du fichier</h3>
     <p>Tu peux renommer ton fichier avant de télécharger</p>
     <div class="filename-row">
@@ -292,7 +726,7 @@
     </div>
     <div class="modal-btns">
       <button class="cancel" onclick="closeDownloadModal()">Annuler</button>
-      <button class="confirm" onclick="confirmDownload()">⬇️ Télécharger</button>
+      <button class="confirm" onclick="confirmDownload()">Télécharger</button>
     </div>
   </div>
 </div>
@@ -318,7 +752,7 @@ function switchTool(id, btn) {
   btn.classList.add('active');
   document.getElementById('toolTitle').textContent = TOOLS_META[id].title;
   const badge = document.getElementById('toolBadge');
-  badge.textContent = TOOLS_META[id].local ? '🔒 100% Local' : '⚠️ API externe';
+  badge.textContent = TOOLS_META[id].local ? '100% Local' : 'API externe';
   badge.className = 'badge ' + (TOOLS_META[id].local ? 'local' : 'external');
 }
 
@@ -447,7 +881,7 @@ function imgAdd(input) {
   list.innerHTML = '';
   _imgFiles.forEach(f => {
     const s = document.createElement('span');
-    s.style.cssText = 'background:#0d2137;border-radius:8px;padding:5px 10px;font-size:12px;color:#e0f2fe';
+    s.style.cssText = 'background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:6px 12px;font-size:12px;color:#e2e8f0;font-weight:500';
     s.textContent = '🖼️ ' + f.name;
     list.appendChild(s);
   });
@@ -586,7 +1020,7 @@ function saveSignature() {
   localStorage.setItem('pdf_toolkit_sigs', JSON.stringify(_savedSigs));
   document.getElementById('sigNameInput').value = '';
   document.getElementById('saved-count').textContent = _savedSigs.length;
-  alert('✅ Signature "' + name + '" enregistrée !');
+  alert('Signature "' + name + '" enregistrée !');
 }
 
 function renderSavedSigs() {
@@ -599,7 +1033,7 @@ function renderSavedSigs() {
   _savedSigs.forEach(sig => {
     const d = document.createElement('div');
     d.className = 'saved-sig' + (_selectedSaved?.id === sig.id ? ' selected' : '');
-    d.innerHTML = '<img src="' + sig.img + '"><div class="info"><div class="name">' + sig.name + '</div><div class="meta">' + (sig.type==='draw'?'✏️ Dessinée':'⌨️ Tapée') + ' · ' + new Date(sig.createdAt).toLocaleDateString('fr-FR') + '</div></div>' + (_selectedSaved?.id===sig.id?'<span style="color:#38bdf8;font-size:17px">✓</span>':'') + '<button onclick="deleteSig('+sig.id+',event)" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:15px;padding:0 4px">🗑</button>';
+    d.innerHTML = '<img src="' + sig.img + '"><div class="info"><div class="name">' + sig.name + '</div><div class="meta">' + (sig.type==='draw'?'Dessinée':'Tapée') + ' · ' + new Date(sig.createdAt).toLocaleDateString('fr-FR') + '</div></div>' + (_selectedSaved?.id===sig.id?'<span style="color:#60a5fa;font-size:17px">✓</span>':'') + '<button onclick="deleteSig('+sig.id+',event)" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:15px;padding:0 4px">✕</button>';
     d.onclick = () => { _selectedSaved = sig; renderSavedSigs(); document.getElementById('use-saved-btn').style.display = 'block'; };
     list.appendChild(d);
   });
@@ -663,7 +1097,7 @@ async function applySignature() {
   page.drawImage(pngImg, { x: (_sigPlacement.x/100)*width - sigW/2, y: height - (_sigPlacement.y/100)*height - sigH/2, width: sigW, height: sigH });
   const bytes = await pdf.save();
   triggerDownload(bytes, 'signe_' + _signFile.name);
-  btn.textContent = '⬇️ Télécharger le PDF signé'; btn.disabled = false;
+  btn.textContent = 'Télécharger le PDF signé'; btn.disabled = false;
   signStep('done');
 }
 
@@ -679,25 +1113,29 @@ function signReset() {
 // ─── PDF2WORD (100% local via pdf2docx — auto-install silencieux) ─────────────
 let _pdf2wordFile = null, _pdf2wordDocxBytes = null, _pdf2wordReady = false;
 
-// Préparation silencieuse au chargement (vérifie + installe si besoin)
 (async function checkPdf2WordReady() {
   if (!window.electronAPI?.checkPdf2Word) return;
   const el = document.getElementById('pdf2word-status');
-  // Afficher un message discret pendant la préparation
   el.style.display = 'block';
-  el.style.background = '#0e749022'; el.style.border = '1px solid #0ea5e9'; el.style.color = '#38bdf8';
-  el.innerHTML = '🔄 Préparation du module de conversion...';
+  el.style.background = 'linear-gradient(135deg, #3b82f610, #6366f110)';
+  el.style.border = '1px solid #3b82f625';
+  el.style.color = '#60a5fa';
+  el.innerHTML = 'Préparation du module de conversion...';
 
   const status = await window.electronAPI.checkPdf2Word();
   if (status.available) {
     _pdf2wordReady = true;
-    el.style.display = 'none'; // Tout est prêt, on cache le message
+    el.style.display = 'none';
   } else if (status.reason === 'python_missing') {
-    el.style.background = '#451a0322'; el.style.border = '1px solid #f59e0b'; el.style.color = '#fbbf24';
-    el.innerHTML = '⚠️ Cette fonctionnalité n\'est pas disponible sur ce système.';
+    el.style.background = 'linear-gradient(135deg, #f59e0b10, #ef444410)';
+    el.style.border = '1px solid #f59e0b25';
+    el.style.color = '#fbbf24';
+    el.innerHTML = 'Cette fonctionnalité n\'est pas disponible sur ce système.';
   } else {
-    el.style.background = '#451a0322'; el.style.border = '1px solid #f59e0b'; el.style.color = '#fbbf24';
-    el.innerHTML = '⚠️ La préparation a échoué. Réessaye en relançant l\'application.';
+    el.style.background = 'linear-gradient(135deg, #f59e0b10, #ef444410)';
+    el.style.border = '1px solid #f59e0b25';
+    el.style.color = '#fbbf24';
+    el.innerHTML = 'La préparation a échoué. Réessaye en relançant l\'application.';
   }
 })();
 
@@ -730,7 +1168,6 @@ async function doPdf2Word() {
   const btn = document.getElementById('pdf2word-btn');
   btn.textContent = 'Conversion en cours...'; btn.disabled = true;
 
-  // Afficher la barre de progression
   const progress = document.getElementById('pdf2word-progress');
   const bar = document.getElementById('pdf2word-bar');
   const progressText = document.getElementById('pdf2word-progress-text');
@@ -738,8 +1175,6 @@ async function doPdf2Word() {
   bar.style.width = '5%';
   progressText.textContent = 'Préparation...';
 
-  // La première conversion peut inclure une installation silencieuse (~30s)
-  // Les suivantes sont instantanées grâce au cache
   let pct = 5;
   const progressInterval = setInterval(() => {
     if (pct < 85) { pct += Math.random() * 5; bar.style.width = Math.min(pct, 85) + '%'; }
@@ -769,10 +1204,8 @@ async function doPdf2Word() {
       document.getElementById('pdf2word-result').style.display = 'block';
       document.getElementById('pdf2word-btn').style.display = 'none';
 
-      // Cacher le message de statut si encore visible
       document.getElementById('pdf2word-status').style.display = 'none';
 
-      // Brancher le bouton de téléchargement
       document.getElementById('pdf2word-dl-btn').onclick = () => {
         const blob = new Blob([_pdf2wordDocxBytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
         const url = URL.createObjectURL(blob);
