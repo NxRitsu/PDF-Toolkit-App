@@ -10,716 +10,1205 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-    /* ─── RESET & BASE ─────────────────────────────────────────────── */
-    html, body { height: 100%; overflow-x: hidden; }
+    /* ═══════════════════════════════════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════════════════════════════════ */
+    :root {
+      --bg-primary: #030712;
+      --bg-secondary: #0a0f1e;
+      --bg-card: #0d1225;
+      --bg-card-hover: #111936;
+      --bg-elevated: #080d1c;
+      --border-subtle: rgba(255,255,255,0.04);
+      --border-medium: rgba(255,255,255,0.08);
+      --border-glow: rgba(59,130,246,0.25);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #475569;
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --glow-blue: rgba(59,130,246,0.15);
+      --glow-purple: rgba(139,92,246,0.12);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-xl: 28px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════════════════════════════ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow-x: hidden; }
     body {
-      background: #050a18;
-      color: #e2e8f0;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       min-height: 100vh;
-      padding: 32px 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       AMBIENT BACKGROUND
+    ═══════════════════════════════════════════════════════════════════ */
+    .ambient-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      overflow: hidden;
+    }
+    .ambient-bg::before {
+      content: '';
+      position: absolute;
+      width: 140%; height: 140%;
+      top: -20%; left: -20%;
+      background:
+        radial-gradient(ellipse 600px 400px at 20% 10%, rgba(59,130,246,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 350px at 80% 20%, rgba(139,92,246,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 300px at 60% 80%, rgba(6,182,212,0.05) 0%, transparent 70%),
+        radial-gradient(ellipse 300px 200px at 10% 70%, rgba(139,92,246,0.04) 0%, transparent 70%);
+      animation: ambientDrift 20s ease-in-out infinite alternate;
+    }
+    @keyframes ambientDrift {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(30px, -20px) rotate(2deg); }
+    }
+
+    /* Grid pattern */
+    .grid-pattern {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-size: 80px 80px;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.015) 1px, transparent 1px);
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(0,0,0,0.5) 0%, transparent 80%);
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+      filter: blur(100px);
+    }
+    .orb-1 { width: 500px; height: 500px; top: -150px; left: -100px; background: var(--accent-blue); opacity: 0.07; animation: orbFloat1 18s ease-in-out infinite alternate; }
+    .orb-2 { width: 400px; height: 400px; bottom: -100px; right: -80px; background: var(--accent-purple); opacity: 0.06; animation: orbFloat2 14s ease-in-out infinite alternate; }
+    .orb-3 { width: 300px; height: 300px; top: 50%; left: 50%; background: var(--accent-cyan); opacity: 0.04; animation: orbFloat3 22s ease-in-out infinite alternate; }
+    @keyframes orbFloat1 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(40px,-30px) scale(1.15); } }
+    @keyframes orbFloat2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-30px,20px) scale(1.1); } }
+    @keyframes orbFloat3 { 0% { transform: translate(-50%,-50%) scale(1); } 100% { transform: translate(calc(-50% + 50px), calc(-50% - 40px)) scale(1.2); } }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       LAYOUT
+    ═══════════════════════════════════════════════════════════════════ */
+    .app {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+    }
+
+    /* ─── NAVBAR ──────────────────────────────────────────────────── */
+    .navbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border-subtle);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(3,7,18,0.7);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 14px; }
+    .nav-logo {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 30px rgba(59,130,246,0.3), 0 0 60px rgba(59,130,246,0.1);
       position: relative;
     }
-    /* Gradient orbs en arrière-plan */
-    body::before {
+    .nav-logo::after {
       content: '';
-      position: fixed;
-      top: -120px; left: -80px;
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, #1d4ed822 0%, transparent 70%);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 0;
-    }
-    body::after {
-      content: '';
-      position: fixed;
-      bottom: -100px; right: -60px;
-      width: 350px; height: 350px;
-      background: radial-gradient(circle, #7c3aed18 0%, transparent 70%);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .container { max-width: 660px; margin: 0 auto; position: relative; z-index: 1; }
-
-    /* ─── HEADER ────────────────────────────────────────────────────── */
-    .header { text-align: center; margin-bottom: 36px; }
-    .header .logo {
-      width: 56px; height: 56px;
-      margin: 0 auto 14px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      position: absolute; inset: -2px;
       border-radius: 16px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 8px 32px #3b82f640;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      z-index: -1;
+      opacity: 0.4;
+      filter: blur(10px);
     }
-    .header h1 {
-      font-size: 28px;
-      font-weight: 900;
+    .nav-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px; font-weight: 700; color: var(--text-primary);
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #60a5fa 100%);
+    }
+    .nav-title span { color: var(--accent-blue); }
+
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-link {
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      border: none; background: none;
+      font-family: inherit;
+    }
+    .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+    .nav-link.active { color: var(--accent-blue); background: rgba(59,130,246,0.08); }
+
+    .nav-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 18px;
+      border-radius: 99px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.15);
+      color: #34d399;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+    .nav-pulse {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 10px #34d399;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ─── HERO ────────────────────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 60px 32px 20px;
+      position: relative;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px;
+      border-radius: 99px;
+      background: rgba(59,130,246,0.06);
+      border: 1px solid rgba(59,130,246,0.12);
+      color: var(--accent-blue);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 24px;
+    }
+    .hero-eyebrow .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+    }
+    .hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(36px, 6vw, 52px);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: shimmer 3s ease-in-out infinite;
+      animation: gradientFlow 4s ease-in-out infinite alternate;
     }
-    @keyframes shimmer {
-      0%, 100% { background-position: 0% center; }
-      50% { background-position: 200% center; }
+    @keyframes gradientFlow {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
     }
-    .header .subtitle {
-      color: #94a3b8;
+    .hero-subtitle {
+      color: var(--text-muted);
+      font-size: 16px;
+      font-weight: 400;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ─── PARTNERS ROW ────────────────────────────────────────────── */
+    .trust-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 32px;
+      padding: 24px 32px;
+      margin: 10px auto 0;
+      max-width: 600px;
+      opacity: 0.3;
+    }
+    .trust-item {
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 13px;
-      margin-top: 6px;
-      font-weight: 500;
-      letter-spacing: 0.3px;
-    }
-    .header .byline {
-      color: #60a5fa;
-      font-size: 12px;
       font-weight: 600;
-      margin-top: 4px;
-      opacity: 0.8;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+      display: flex; align-items: center; gap: 6px;
+      white-space: nowrap;
+    }
+    .trust-item .trust-icon { font-size: 16px; }
+
+    /* ─── TOOLS GRID ──────────────────────────────────────────────── */
+    .tools-section {
+      padding: 30px 32px 50px;
+      flex: 1;
     }
 
-    /* ─── NAV ───────────────────────────────────────────────────────── */
-    .nav {
-      display: flex; flex-wrap: wrap; gap: 8px;
-      margin-bottom: 24px; justify-content: center;
+    .section-header {
+      text-align: center;
+      margin-bottom: 32px;
     }
-    .nav button {
-      padding: 10px 16px;
-      border-radius: 12px;
-      border: 1px solid #1e293b;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 12.5px;
-      font-family: inherit;
-      background: #0f172a;
-      color: #94a3b8;
-      transition: all .25s cubic-bezier(.4,0,.2,1);
-      letter-spacing: 0.2px;
+    .section-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px; font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
     }
-    .nav button:hover {
-      background: #1e293b;
-      color: #e2e8f0;
-      border-color: #334155;
-      transform: translateY(-1px);
-    }
-    .nav button.active {
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
-      color: #fff;
-      border-color: transparent;
-      box-shadow: 0 4px 20px #3b82f640, inset 0 1px 0 #ffffff18;
+    .section-header p {
+      color: var(--text-muted);
+      font-size: 14px;
     }
 
-    /* ─── CARD (glassmorphism) ──────────────────────────────────────── */
-    .card {
-      background: linear-gradient(160deg, #0f172acc 0%, #1e293b66 100%);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-radius: 20px;
-      padding: 28px;
-      border: 1px solid #ffffff0a;
-      box-shadow: 0 8px 48px #00000060, inset 0 1px 0 #ffffff06;
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 720px;
+      margin: 0 auto;
+      transition: opacity 0.4s, transform 0.4s;
     }
-    .card-header {
-      display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 22px;
-    }
-    .card-header h2 { font-size: 17px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.2px; }
+    .tools-grid.hidden { opacity: 0; transform: translateY(10px); pointer-events: none; position: absolute; }
 
-    /* ─── BADGE ─────────────────────────────────────────────────────── */
-    .badge {
-      font-size: 11px; padding: 4px 10px;
-      border-radius: 99px; font-weight: 600;
-      letter-spacing: 0.3px;
-    }
-    .badge.local {
-      background: linear-gradient(135deg, #0c4a6e44, #06495844);
-      color: #38bdf8;
-      border: 1px solid #0ea5e930;
-    }
-    .badge.external {
-      background: #451a0333;
-      color: #fbbf24;
-      border: 1px solid #f59e0b30;
-    }
-
-    /* ─── TOOLS ─────────────────────────────────────────────────────── */
-    .tool { display: none; flex-direction: column; gap: 16px; }
-    .tool.active { display: flex; }
-
-    /* ─── DROPZONE ──────────────────────────────────────────────────── */
-    .dropzone {
-      border: 2px dashed #1e293b;
-      border-radius: 16px;
-      padding: 36px 20px;
+    .tool-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px 20px;
       text-align: center;
       cursor: pointer;
-      background: #0f172a66;
-      transition: all .3s cubic-bezier(.4,0,.2,1);
-      color: #94a3b8;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .tool-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: var(--radius-lg);
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2), transparent 60%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .tool-card::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at center, var(--card-glow, rgba(59,130,246,0.06)), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .tool-card:hover::before { opacity: 1; }
+    .tool-card:hover::after { opacity: 1; }
+    .tool-card:hover {
+      transform: translateY(-6px);
+      background: var(--bg-card-hover);
+      border-color: var(--border-medium);
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.4),
+        0 0 40px var(--card-glow, rgba(59,130,246,0.05));
+    }
+    .tool-card:active { transform: translateY(-3px); }
+
+    .tc-compress { --card-glow: rgba(59,130,246,0.08); }
+    .tc-merge { --card-glow: rgba(139,92,246,0.08); }
+    .tc-split { --card-glow: rgba(244,63,94,0.08); }
+    .tc-img2pdf { --card-glow: rgba(245,158,11,0.08); }
+    .tc-sign { --card-glow: rgba(16,185,129,0.08); }
+    .tc-pdf2word { --card-glow: rgba(6,182,212,0.08); }
+
+    .tool-card .tc-icon-wrap {
+      width: 58px; height: 58px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      margin: 0 auto 16px;
+      position: relative;
+      z-index: 1;
+    }
+    .tool-card .tc-icon-wrap::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: var(--radius-md);
+      background: inherit;
+      filter: blur(18px);
+      opacity: 0.5;
+      z-index: -1;
+    }
+    .tc-compress .tc-icon-wrap { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .tc-merge .tc-icon-wrap { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .tc-split .tc-icon-wrap { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+    .tc-img2pdf .tc-icon-wrap { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .tc-sign .tc-icon-wrap { background: linear-gradient(135deg, #10b981, #059669); }
+    .tc-pdf2word .tc-icon-wrap { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+
+    .tool-card .tc-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px; font-weight: 700; color: var(--text-primary);
+      margin-bottom: 6px;
+      position: relative; z-index: 1;
+    }
+    .tool-card .tc-desc {
+      font-size: 12px; color: var(--text-muted);
+      font-weight: 400;
+      line-height: 1.5;
+      position: relative; z-index: 1;
+    }
+
+    /* ─── FEATURES SECTION ────────────────────────────────────────── */
+    .features-section {
+      padding: 20px 32px 50px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .feature-card {
+      text-align: center;
+      padding: 28px 16px;
+      border-radius: var(--radius-lg);
+      background: rgba(59,130,246,0.03);
+      border: 1px solid var(--border-subtle);
+      transition: all 0.3s;
+    }
+    .feature-card:hover {
+      background: rgba(59,130,246,0.06);
+      border-color: var(--border-medium);
+    }
+    .feature-icon {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: rgba(59,130,246,0.1);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+      font-size: 20px;
+      border: 1px solid rgba(59,130,246,0.15);
+    }
+    .feature-card h4 {
+      font-family: 'Space Grotesk', sans-serif;
+      color: var(--text-primary);
+      font-size: 14px; font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* ─── FOOTER ──────────────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      padding: 24px 32px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    .footer span { color: var(--accent-blue); font-weight: 700; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TOOL VIEW (active tool)
+    ═══════════════════════════════════════════════════════════════════ */
+    .tool-view {
+      max-width: 720px;
+      margin: 0 auto;
+      display: none;
+      flex-direction: column;
+      gap: 0;
+      animation: viewSlideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .tool-view.visible { display: flex; }
+    @keyframes viewSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tool-view-header {
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 24px;
+    }
+    .back-btn {
+      width: 42px; height: 42px;
+      border-radius: 14px;
+      border: 1px solid var(--border-medium);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.25s;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+    .back-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+      border-color: var(--border-glow);
+      box-shadow: 0 0 20px rgba(59,130,246,0.1);
+    }
+    .tool-view-header .tv-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .tool-view-header .tv-icon::after {
+      content: '';
+      position: absolute; inset: -4px;
+      border-radius: 18px;
+      background: inherit;
+      filter: blur(14px);
+      opacity: 0.4;
+      z-index: -1;
+    }
+    .tool-view-header .tv-info h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 19px; font-weight: 700; color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+    .tool-view-header .tv-info p {
+      font-size: 13px; color: var(--text-muted); font-weight: 400; margin-top: 3px;
+    }
+
+    .tool-view-body {
+      background: var(--bg-card);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 12px 50px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .tool-view-body::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.2), rgba(139,92,246,0.2), transparent);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       COMPONENTS
+    ═══════════════════════════════════════════════════════════════════ */
+
+    /* ─── DROPZONE ────────────────────────────────────────────────── */
+    .dropzone {
+      border: 2px dashed rgba(255,255,255,0.06);
+      border-radius: var(--radius-lg);
+      padding: 44px 24px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg-elevated);
+      transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      color: var(--text-muted);
       position: relative;
       overflow: hidden;
     }
     .dropzone::before {
       content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, #3b82f608, #8b5cf608);
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(59,130,246,0.06) 0%, transparent 70%);
       opacity: 0;
-      transition: opacity .3s;
+      transition: opacity 0.35s;
     }
     .dropzone:hover::before, .dropzone.drag::before { opacity: 1; }
     .dropzone:hover, .dropzone.drag {
-      border-color: #3b82f660;
-      background: #0f172a99;
+      border-color: rgba(59,130,246,0.3);
       transform: translateY(-2px);
-      box-shadow: 0 8px 30px #3b82f615;
+      box-shadow: 0 12px 40px rgba(59,130,246,0.06);
     }
-    .dropzone .icon { font-size: 36px; margin-bottom: 10px; position: relative; z-index: 1; }
-    .dropzone p { font-size: 13px; font-weight: 500; position: relative; z-index: 1; }
+    .dropzone .dz-icon {
+      width: 60px; height: 60px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.08));
+      border: 1px solid rgba(59,130,246,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      margin: 0 auto 16px;
+      position: relative; z-index: 1;
+    }
+    .dropzone p { font-size: 14px; font-weight: 500; position: relative; z-index: 1; color: var(--text-secondary); line-height: 1.5; }
+    .dropzone .dz-hint { font-size: 12px; color: var(--text-muted); margin-top: 8px; font-weight: 400; }
 
-    /* ─── BUTTONS ───────────────────────────────────────────────────── */
+    /* ─── BUTTONS ─────────────────────────────────────────────────── */
     .btn {
-      padding: 12px 20px;
-      border-radius: 12px;
+      padding: 14px 22px;
+      border-radius: var(--radius-md);
       border: none;
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      background: linear-gradient(135deg, var(--accent-blue), #6366f1);
       color: #fff;
       cursor: pointer;
       font-weight: 700;
       font-size: 14px;
-      font-family: inherit;
+      font-family: 'Space Grotesk', sans-serif;
       width: 100%;
-      transition: all .25s cubic-bezier(.4,0,.2,1);
-      box-shadow: 0 4px 16px #3b82f630;
-      letter-spacing: 0.2px;
+      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      box-shadow: 0 4px 24px rgba(59,130,246,0.25);
+      letter-spacing: 0.3px;
+      position: relative;
+      overflow: hidden;
     }
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 200%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      transition: left 0.6s;
+    }
+    .btn:hover:not(:disabled)::before { left: 100%; }
     .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 24px #3b82f650;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 35px rgba(59,130,246,0.35);
     }
     .btn:active:not(:disabled) { transform: translateY(0); }
     .btn:disabled {
-      background: #1e293b;
-      color: #475569;
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
       cursor: default;
       box-shadow: none;
     }
     .btn.success {
-      background: linear-gradient(135deg, #0d9488, #0891b2);
-      box-shadow: 0 4px 16px #0d948830;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+      box-shadow: 0 4px 24px rgba(16,185,129,0.2);
     }
-    .btn.warn { background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; }
+    .btn.warn { background: linear-gradient(135deg, var(--accent-amber), var(--accent-red)); color: #fff; }
     .btn.secondary {
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      color: #94a3b8;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-secondary);
       box-shadow: none;
     }
     .btn.secondary:hover:not(:disabled) {
-      background: #1e293b;
-      color: #e2e8f0;
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+      border-color: var(--border-glow);
       box-shadow: none;
     }
 
-    /* ─── RESULT BOX ───────────────────────────────────────────────── */
+    /* ─── RESULT BOX ──────────────────────────────────────────────── */
     .result-box {
-      background: linear-gradient(135deg, #0d948815, #0891b210);
-      border: 1px solid #0d948830;
-      border-radius: 14px;
-      padding: 18px;
+      background: rgba(16,185,129,0.05);
+      border: 1px solid rgba(16,185,129,0.12);
+      border-radius: var(--radius-md);
+      padding: 22px;
     }
-    .result-box .title { color: #2dd4bf; font-weight: 700; margin-bottom: 6px; font-size: 14px; }
-    .result-box .info { color: #94a3b8; font-size: 13px; line-height: 1.5; }
+    .result-box .title { color: #34d399; font-weight: 700; margin-bottom: 8px; font-size: 15px; font-family: 'Space Grotesk', sans-serif; }
+    .result-box .info { color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
 
-    /* ─── FILE TAG ──────────────────────────────────────────────────── */
+    /* ─── FILE TAG ────────────────────────────────────────────────── */
     .file-tag {
       display: flex; justify-content: space-between;
       align-items: center;
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: 10px;
-      padding: 10px 14px;
-      transition: all .2s;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      border-radius: 14px;
+      padding: 12px 16px;
+      transition: all 0.2s;
     }
-    .file-tag:hover { border-color: #334155; }
-    .file-tag span { color: #e2e8f0; font-size: 13px; font-weight: 500; }
-    .file-tag button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 15px; opacity: 0.7; transition: opacity .2s; }
+    .file-tag:hover { border-color: var(--border-glow); }
+    .file-tag span { color: var(--text-primary); font-size: 13px; font-weight: 500; }
+    .file-tag button { background: none; border: none; color: var(--accent-red); cursor: pointer; font-size: 14px; opacity: 0.6; transition: opacity 0.2s; }
     .file-tag button:hover { opacity: 1; }
 
-    /* ─── INPUTS ────────────────────────────────────────────────────── */
-    .warn-box {
-      background: #451a0315;
-      border: 1px solid #f59e0b25;
-      border-radius: 12px;
-      padding: 14px;
-      color: #fbbf24;
-      font-size: 13px;
-      font-weight: 500;
-    }
+    /* ─── INPUTS ──────────────────────────────────────────────────── */
     input[type="number"], input[type="text"] {
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #1e293b;
-      background: #0f172a;
-      color: #e2e8f0;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border-medium);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
       font-size: 14px;
       font-family: inherit;
-      transition: border-color .2s;
+      transition: all 0.25s;
     }
     input[type="number"]:focus, input[type="text"]:focus {
       outline: none;
-      border-color: #3b82f680;
-      box-shadow: 0 0 0 3px #3b82f615;
+      border-color: var(--border-glow);
+      box-shadow: 0 0 0 4px rgba(59,130,246,0.08);
     }
-    input[type="number"] { width: 68px; text-align: center; }
+    input[type="number"] { width: 72px; text-align: center; }
     .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .label { color: #94a3b8; font-size: 13px; font-weight: 500; }
+    .label { color: var(--text-muted); font-size: 13px; font-weight: 600; }
 
-    /* ─── SIGN: TABS ───────────────────────────────────────────────── */
+    /* ─── TABS ────────────────────────────────────────────────────── */
     .tabs {
       display: flex; gap: 4px;
-      background: #0f172a;
-      border-radius: 12px;
-      padding: 4px;
-      border: 1px solid #1e293b;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-md);
+      padding: 5px;
+      border: 1px solid var(--border-medium);
     }
     .tabs button {
-      flex: 1; padding: 9px;
-      border-radius: 9px; border: none;
-      font-weight: 700; font-size: 12px;
-      cursor: pointer;
-      background: transparent;
-      color: #94a3b8;
-      font-family: inherit;
-      transition: all .2s;
+      flex: 1; padding: 11px;
+      border-radius: 12px; border: none;
+      font-weight: 700; font-size: 13px;
+      cursor: pointer; background: transparent;
+      color: var(--text-muted); font-family: 'Space Grotesk', sans-serif;
+      transition: all 0.25s;
     }
-    .tabs button:hover { color: #e2e8f0; }
+    .tabs button:hover { color: var(--text-secondary); }
     .tabs button.active {
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      background: linear-gradient(135deg, var(--accent-blue), #6366f1);
       color: #fff;
-      box-shadow: 0 2px 8px #3b82f630;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.25);
     }
     .mode-btns { display: flex; gap: 8px; }
     .mode-btns button {
-      flex: 1; padding: 10px;
-      border-radius: 10px; border: 1px solid #1e293b;
+      flex: 1; padding: 11px;
+      border-radius: 14px; border: 1px solid var(--border-medium);
       font-weight: 700; font-size: 13px;
-      cursor: pointer;
-      background: #0f172a;
-      color: #94a3b8;
-      font-family: inherit;
-      transition: all .2s;
+      cursor: pointer; background: var(--bg-elevated);
+      color: var(--text-muted); font-family: 'Space Grotesk', sans-serif;
+      transition: all 0.25s;
     }
-    .mode-btns button:hover { border-color: #334155; color: #e2e8f0; }
+    .mode-btns button:hover { border-color: var(--border-glow); color: var(--text-secondary); }
     .mode-btns button.active {
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
-      color: #fff;
-      border-color: transparent;
-      box-shadow: 0 2px 8px #3b82f630;
+      background: linear-gradient(135deg, var(--accent-blue), #6366f1);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.2);
     }
 
-    /* ─── SIGN: CANVAS & TYPED ─────────────────────────────────────── */
+    /* ─── SIGN COMPONENTS ─────────────────────────────────────────── */
     canvas#sigCanvas {
-      background: #0f172a;
-      border-radius: 12px;
-      border: 1px solid #1e293b;
-      cursor: crosshair;
-      width: 100%;
-      touch-action: none;
-      display: block;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-medium);
+      cursor: crosshair; width: 100%;
+      touch-action: none; display: block;
     }
     #typedSig {
-      width: 100%; padding: 14px;
-      border-radius: 12px;
-      border: 1px solid #1e293b;
-      background: #0f172a;
-      font-size: 26px;
-      font-style: italic;
-      font-family: Georgia, serif;
-      color: #38bdf8;
+      width: 100%; padding: 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-medium);
+      background: var(--bg-elevated);
+      font-size: 28px; font-style: italic;
+      font-family: Georgia, serif; color: #38bdf8;
     }
     .color-picker { display: flex; gap: 8px; align-items: center; }
-    .color-picker span { color: #94a3b8; font-size: 12px; font-weight: 500; }
+    .color-picker span { color: var(--text-muted); font-size: 12px; font-weight: 600; }
     .color-dot {
-      width: 24px; height: 24px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: all .2s;
-      flex-shrink: 0;
+      width: 28px; height: 28px;
+      border-radius: 50%; cursor: pointer;
+      border: 2.5px solid transparent;
+      transition: all 0.25s; flex-shrink: 0;
     }
-    .color-dot:hover { transform: scale(1.15); }
-    .color-dot.selected { border-color: #fff; box-shadow: 0 0 8px #ffffff40; }
-
-    /* ─── SIGN: SAVED SIGS ─────────────────────────────────────────── */
+    .color-dot:hover { transform: scale(1.2); }
+    .color-dot.selected {
+      border-color: #fff;
+      box-shadow: 0 0 16px rgba(255,255,255,0.2);
+      transform: scale(1.1);
+    }
     .saved-sig {
       display: flex; align-items: center; gap: 12px;
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 10px 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
       cursor: pointer;
-      transition: all .2s;
+      transition: all 0.25s;
     }
-    .saved-sig:hover { border-color: #334155; background: #1e293b40; }
+    .saved-sig:hover { border-color: var(--border-glow); background: rgba(59,130,246,0.03); }
     .saved-sig.selected {
-      background: linear-gradient(135deg, #1e3a5f20, #3b82f610);
-      border-color: #3b82f650;
+      background: rgba(59,130,246,0.06);
+      border-color: var(--border-glow);
+      box-shadow: 0 0 20px rgba(59,130,246,0.08);
     }
     .saved-sig img {
-      height: 36px; max-width: 110px;
+      height: 38px; max-width: 110px;
       object-fit: contain;
-      background: #1e293b;
-      border-radius: 8px;
-      padding: 4px;
+      background: var(--bg-card);
+      border-radius: 8px; padding: 4px;
     }
     .saved-sig .info { flex: 1; }
-    .saved-sig .info .name { color: #e2e8f0; font-size: 13px; font-weight: 600; }
-    .saved-sig .info .meta { color: #64748b; font-size: 11px; }
+    .saved-sig .info .name { color: var(--text-primary); font-size: 13px; font-weight: 600; }
+    .saved-sig .info .meta { color: var(--text-muted); font-size: 11px; }
     .save-row { display: flex; gap: 8px; }
     .save-row input { flex: 1; }
     .save-btn {
-      padding: 10px 16px;
-      border-radius: 10px;
-      border: 1px solid #1e293b;
-      background: #0f172a;
-      color: #60a5fa;
+      padding: 12px 20px;
+      border-radius: 14px;
+      border: 1px solid var(--border-medium);
+      background: var(--bg-elevated);
+      color: var(--accent-blue);
       cursor: pointer;
-      font-weight: 700;
-      font-size: 13px;
-      font-family: inherit;
+      font-weight: 700; font-size: 13px;
+      font-family: 'Space Grotesk', sans-serif;
       white-space: nowrap;
-      transition: all .2s;
+      transition: all 0.25s;
     }
-    .save-btn:hover { background: #1e293b; border-color: #3b82f650; }
-
-    /* ─── SIGN: PREVIEW ────────────────────────────────────────────── */
+    .save-btn:hover { background: var(--bg-card); border-color: var(--border-glow); box-shadow: 0 0 20px rgba(59,130,246,0.08); }
     #previewWrap {
       position: relative; cursor: crosshair;
-      border-radius: 14px; overflow: hidden;
-      border: 1px solid #1e293b;
-      box-shadow: 0 4px 24px #00000040;
+      border-radius: var(--radius-lg); overflow: hidden;
+      border: 1px solid var(--border-medium);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
     }
     #previewWrap img#pageImg { width: 100%; display: block; }
     #sigOverlay {
-      position: absolute;
-      transform: translate(-50%,-50%);
-      width: 28%; opacity: 0.9;
-      pointer-events: none;
-      display: none;
+      position: absolute; transform: translate(-50%,-50%);
+      width: 28%; opacity: 0.9; pointer-events: none; display: none;
     }
     .page-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
     .page-btns button {
-      padding: 5px 12px;
-      border-radius: 8px;
-      border: 1px solid #1e293b;
-      background: #0f172a;
-      color: #94a3b8;
-      cursor: pointer;
-      font-weight: 700;
-      font-family: inherit;
-      transition: all .2s;
+      padding: 6px 14px; border-radius: 10px;
+      border: 1px solid var(--border-medium); background: var(--bg-elevated);
+      color: var(--text-muted); cursor: pointer;
+      font-weight: 700; font-family: 'Space Grotesk', sans-serif;
+      transition: all 0.2s;
     }
-    .page-btns button:hover { border-color: #334155; color: #e2e8f0; }
     .page-btns button.active {
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
-      color: #fff;
-      border-color: transparent;
+      background: linear-gradient(135deg, var(--accent-blue), #6366f1);
+      color: #fff; border-color: transparent;
     }
 
-    /* ─── MODAL ─────────────────────────────────────────────────────── */
+    /* ─── MODAL ───────────────────────────────────────────────────── */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
-      background: #000000dd;
-      backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       align-items: center; justify-content: center;
       z-index: 200;
     }
     .modal-overlay.show { display: flex; }
     .modal {
-      background: linear-gradient(160deg, #0f172aee, #1e293bee);
-      border-radius: 20px;
-      padding: 32px;
-      max-width: 440px; width: 90%;
-      border: 1px solid #ffffff0a;
-      box-shadow: 0 24px 64px #00000080, inset 0 1px 0 #ffffff06;
+      background: linear-gradient(160deg, rgba(13,18,37,0.98), rgba(10,15,30,0.98));
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      max-width: 460px; width: 90%;
+      border: 1px solid var(--border-medium);
+      box-shadow: 0 30px 100px rgba(0,0,0,0.6), 0 0 80px rgba(59,130,246,0.06);
+      position: relative;
+      overflow: hidden;
     }
-    .modal h3 { color: #f1f5f9; text-align: center; margin-bottom: 8px; font-size: 18px; font-weight: 700; }
-    .modal p { color: #94a3b8; font-size: 13px; text-align: center; margin-bottom: 20px; }
+    .modal::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.3), transparent);
+    }
+    .modal h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      color: var(--text-primary); text-align: center;
+      margin-bottom: 8px; font-size: 20px; font-weight: 700;
+    }
+    .modal p { color: var(--text-muted); font-size: 14px; text-align: center; margin-bottom: 24px; }
     .modal .filename-row {
       display: flex; align-items: center;
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
       overflow: hidden;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     .modal .filename-row input {
-      flex: 1; padding: 12px 16px;
+      flex: 1; padding: 14px 18px;
       background: transparent; border: none;
-      color: #e2e8f0; font-size: 15px;
+      color: var(--text-primary); font-size: 15px;
       outline: none; font-family: inherit;
     }
     .modal .filename-row span {
-      padding: 0 16px;
-      color: #64748b;
-      font-size: 14px;
-      border-left: 1px solid #1e293b;
-      font-weight: 500;
+      padding: 0 18px; color: var(--text-muted);
+      font-size: 14px; border-left: 1px solid var(--border-medium);
+      font-weight: 600;
     }
-    .modal .modal-btns { display: flex; gap: 10px; }
+    .modal .modal-btns { display: flex; gap: 12px; }
     .modal .modal-btns button {
-      flex: 1; padding: 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 700;
-      font-family: inherit;
-      transition: all .2s;
+      flex: 1; padding: 14px;
+      border-radius: 14px; cursor: pointer;
+      font-weight: 700; font-family: 'Space Grotesk', sans-serif;
+      transition: all 0.25s; font-size: 14px;
     }
     .modal .modal-btns .cancel {
-      border: 1px solid #1e293b;
-      background: transparent;
-      color: #94a3b8;
+      border: 1px solid var(--border-medium);
+      background: transparent; color: var(--text-muted);
     }
-    .modal .modal-btns .cancel:hover { background: #1e293b; color: #e2e8f0; }
+    .modal .modal-btns .cancel:hover { background: rgba(255,255,255,0.04); color: var(--text-secondary); }
     .modal .modal-btns .confirm {
       border: none;
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      background: linear-gradient(135deg, var(--accent-blue), #6366f1);
       color: #fff;
-      font-size: 15px;
-      box-shadow: 0 4px 16px #3b82f630;
-    }
-    .modal .modal-btns .confirm:hover { box-shadow: 0 6px 24px #3b82f650; }
-
-    /* ─── WARN MODAL ───────────────────────────────────────────────── */
-    .warn-modal { border-color: #f59e0b20; }
-    .warn-modal h3 { color: #fbbf24; }
-    .warn-modal .confirm { background: linear-gradient(135deg, #f59e0b, #ef4444); }
-
-    /* ─── FOOTER ────────────────────────────────────────────────────── */
-    .footer {
-      text-align: center;
-      color: #334155;
-      font-size: 11px;
-      margin-top: 24px;
-      font-weight: 500;
-      letter-spacing: 0.5px;
+      box-shadow: 0 4px 24px rgba(59,130,246,0.25);
     }
 
-    /* ─── MISC ──────────────────────────────────────────────────────── */
-    .success-msg { font-size: 12px; color: #60a5fa; text-align: center; }
+    /* ─── MISC ────────────────────────────────────────────────────── */
     .empty-sigs {
-      color: #475569;
-      font-size: 12px;
-      text-align: center;
-      padding: 20px;
-      background: #0f172a;
-      border-radius: 12px;
-      border: 1px dashed #1e293b;
+      color: var(--text-muted); font-size: 13px;
+      text-align: center; padding: 28px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border-medium);
     }
-    .done-screen { text-align: center; padding: 32px; }
-    .done-screen .icon { font-size: 52px; margin-bottom: 12px; }
-    .done-screen h3 { color: #f1f5f9; font-size: 18px; margin-bottom: 8px; font-weight: 700; }
-    .done-screen p { color: #94a3b8; font-size: 14px; margin-bottom: 24px; }
+    .done-screen { text-align: center; padding: 40px 24px; }
+    .done-screen .icon { font-size: 60px; margin-bottom: 18px; }
+    .done-screen h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      color: var(--text-primary); font-size: 22px; margin-bottom: 8px; font-weight: 700;
+    }
+    .done-screen p { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
 
-    /* ─── SCROLLBAR ─────────────────────────────────────────────────── */
-    ::-webkit-scrollbar { width: 6px; }
+    /* ─── SCROLLBAR ───────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+    ::selection { background: rgba(59,130,246,0.3); color: #fff; }
 
-    /* ─── SELECTION ─────────────────────────────────────────────────── */
-    ::selection { background: #3b82f640; color: #fff; }
+    /* ─── TOOL VISIBILITY ─────────────────────────────────────────── */
+    .tool { display: none; flex-direction: column; gap: 16px; }
+    .tool.active { display: flex; }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .tools-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .features-grid { grid-template-columns: 1fr; gap: 12px; }
+      .hero h1 { font-size: 32px; letter-spacing: -1px; }
+      .hero { padding: 40px 20px 16px; }
+      .navbar { padding: 14px 20px; }
+      .tools-section { padding: 20px 20px 40px; }
+      .tool-card { padding: 22px 14px; }
+      .trust-row { gap: 18px; flex-wrap: wrap; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 400px) {
+      .tools-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .tool-card .tc-icon-wrap { width: 48px; height: 48px; font-size: 22px; }
+    }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <div class="logo">📄</div>
-    <h1>PDF Toolkit</h1>
-    <div class="byline">by Nicodinho</div>
-    <p class="subtitle">Vos fichiers restent sur votre appareil</p>
+
+<!-- Ambient background -->
+<div class="ambient-bg"></div>
+<div class="grid-pattern"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="app">
+  <!-- ─── NAVBAR ───────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <div class="nav-logo">📄</div>
+      <div class="nav-title">PDF <span>Toolkit</span></div>
+    </div>
+    <div class="nav-links">
+      <button class="nav-link active" onclick="goHome()">Accueil</button>
+      <button class="nav-link" onclick="scrollToFeatures()">Fonctionnalités</button>
+    </div>
+    <div class="nav-badge">
+      <div class="nav-pulse"></div>
+      100% Local
+    </div>
+  </nav>
+
+  <!-- ─── HERO ─────────────────────────────────────────────────── -->
+  <div class="hero">
+    <div class="hero-eyebrow">
+      <div class="dot"></div>
+      Application de bureau sécurisée
+    </div>
+    <h1>Gérez vos PDF<br>comme <span class="gradient-text">un pro</span></h1>
+    <p class="hero-subtitle">
+      Compressez, fusionnez, découpez, convertissez et signez vos documents.
+      Tout reste sur votre appareil, rien n'est envoyé en ligne.
+    </p>
   </div>
 
-  <div class="nav">
-    <button class="active" onclick="switchTool('compress',this)">📉 Compresser</button>
-    <button onclick="switchTool('merge',this)">📑 Fusionner</button>
-    <button onclick="switchTool('split',this)">✂️ Découper</button>
-    <button onclick="switchTool('img2pdf',this)">🖼️ Image → PDF</button>
-    <button onclick="switchTool('sign',this)">✍️ Signer</button>
-    <button onclick="switchTool('pdf2word',this)">📄 PDF → Word</button>
+  <!-- ─── TRUST ROW ────────────────────────────────────────────── -->
+  <div class="trust-row">
+    <div class="trust-item"><span class="trust-icon">🔒</span> Chiffrement local</div>
+    <div class="trust-item"><span class="trust-icon">⚡</span> Ultra rapide</div>
+    <div class="trust-item"><span class="trust-icon">🛡️</span> Zéro upload</div>
+    <div class="trust-item"><span class="trust-icon">💻</span> Cross-platform</div>
   </div>
 
-  <div class="card">
-    <div class="card-header">
-      <h2 id="toolTitle">📉 Compression PDF</h2>
-      <span class="badge local" id="toolBadge">100% Local</span>
+  <!-- ─── TOOLS ────────────────────────────────────────────────── -->
+  <div class="tools-section">
+    <div class="section-header">
+      <h2>Tous vos outils PDF</h2>
+      <p>Sélectionnez un outil pour commencer</p>
     </div>
 
-    <!-- COMPRESS -->
-    <div class="tool active" id="tool-compress">
-      <div class="dropzone" id="dz-compress" onclick="document.getElementById('f-compress').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-compress')">
-        <div class="icon">📂</div><p>Glisse ton PDF ici ou clique pour sélectionner</p>
+    <!-- Grid view -->
+    <div class="tools-grid" id="tools-grid">
+      <div class="tool-card tc-compress" onclick="openTool('compress')">
+        <div class="tc-icon-wrap">📉</div>
+        <div class="tc-title">Compresser</div>
+        <div class="tc-desc">Réduire la taille de vos fichiers PDF</div>
       </div>
-      <input type="file" id="f-compress" accept=".pdf" style="display:none" onchange="compressLoad(this)">
-      <div id="compress-info" style="display:none;color:#94a3b8;font-size:13px;font-weight:500"></div>
-      <div id="compress-result" style="display:none" class="result-box">
-        <div class="title">Compression terminée</div>
-        <div class="info" id="compress-stats"></div>
-        <button class="btn success" style="margin-top:12px;width:auto;padding:10px 20px" onclick="triggerDownload(window._compressBytes,'compresse_'+window._compressName)">Télécharger</button>
+      <div class="tool-card tc-merge" onclick="openTool('merge')">
+        <div class="tc-icon-wrap">📑</div>
+        <div class="tc-title">Fusionner</div>
+        <div class="tc-desc">Combiner plusieurs PDFs en un seul</div>
       </div>
-      <button class="btn" id="compress-btn" style="display:none" onclick="doCompress()">Compresser</button>
+      <div class="tool-card tc-split" onclick="openTool('split')">
+        <div class="tc-icon-wrap">✂️</div>
+        <div class="tc-title">Découper</div>
+        <div class="tc-desc">Extraire des pages d'un PDF</div>
+      </div>
+      <div class="tool-card tc-img2pdf" onclick="openTool('img2pdf')">
+        <div class="tc-icon-wrap">🖼️</div>
+        <div class="tc-title">Image → PDF</div>
+        <div class="tc-desc">Convertir vos images en document PDF</div>
+      </div>
+      <div class="tool-card tc-sign" onclick="openTool('sign')">
+        <div class="tc-icon-wrap">✍️</div>
+        <div class="tc-title">Signer</div>
+        <div class="tc-desc">Apposer votre signature sur un PDF</div>
+      </div>
+      <div class="tool-card tc-pdf2word" onclick="openTool('pdf2word')">
+        <div class="tc-icon-wrap">📝</div>
+        <div class="tc-title">PDF → Word</div>
+        <div class="tc-desc">Convertir un PDF en fichier Word</div>
+      </div>
     </div>
 
-    <!-- MERGE -->
-    <div class="tool" id="tool-merge">
-      <div class="dropzone" onclick="document.getElementById('f-merge').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-merge')">
-        <div class="icon">📂</div><p>Glisse tes PDFs ici (plusieurs à la fois)</p>
-      </div>
-      <input type="file" id="f-merge" accept=".pdf" multiple style="display:none" onchange="mergeAdd(this)">
-      <div id="merge-list" style="display:flex;flex-direction:column;gap:6px"></div>
-      <button class="btn" id="merge-btn" style="display:none" onclick="doMerge()">Fusionner</button>
-    </div>
-
-    <!-- SPLIT -->
-    <div class="tool" id="tool-split">
-      <div class="dropzone" onclick="document.getElementById('f-split').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-split')">
-        <div class="icon">📂</div><p>Glisse ton PDF ici</p>
-      </div>
-      <input type="file" id="f-split" accept=".pdf" style="display:none" onchange="splitLoad(this)">
-      <div id="split-info" style="display:none;color:#94a3b8;font-size:13px;font-weight:500"></div>
-      <div id="split-controls" style="display:none">
-        <div class="row" style="margin-bottom:16px">
-          <span class="label">De la page</span>
-          <input type="number" id="split-from" value="1" min="1">
-          <span class="label">à</span>
-          <input type="number" id="split-to" value="1" min="1">
+    <!-- Active tool view -->
+    <div class="tool-view" id="tool-view">
+      <div class="tool-view-header">
+        <button class="back-btn" onclick="closeTool()">←</button>
+        <div class="tv-icon" id="tv-icon"></div>
+        <div class="tv-info">
+          <h3 id="tv-title"></h3>
+          <p id="tv-desc"></p>
         </div>
-        <button class="btn" onclick="doSplit()">Extraire les pages</button>
       </div>
-    </div>
+      <div class="tool-view-body">
 
-    <!-- IMG2PDF -->
-    <div class="tool" id="tool-img2pdf">
-      <div class="dropzone" onclick="document.getElementById('f-img').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-img')">
-        <div class="icon">📂</div><p>Glisse tes images JPG/PNG ici</p>
-      </div>
-      <input type="file" id="f-img" accept="image/png,image/jpeg" multiple style="display:none" onchange="imgAdd(this)">
-      <div id="img-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-      <button class="btn" id="img-btn" style="display:none" onclick="doImg2Pdf()">Convertir en PDF</button>
-    </div>
-
-    <!-- SIGN -->
-    <div class="tool" id="tool-sign">
-      <div id="sign-upload">
-        <div class="dropzone" onclick="document.getElementById('f-sign').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-sign')">
-          <div class="icon">📂</div><p>Glisse ton PDF à signer ici</p>
-        </div>
-        <input type="file" id="f-sign" accept=".pdf" style="display:none" onchange="signLoad(this)">
-        <div id="sign-loading" style="display:none;color:#60a5fa;text-align:center;font-size:13px;font-weight:500">Chargement du PDF...</div>
-      </div>
-      <div id="sign-create" style="display:none;flex-direction:column;gap:14px">
-        <div style="color:#94a3b8;font-size:13px;font-weight:500" id="sign-filename"></div>
-        <div class="tabs">
-          <button class="active" onclick="switchSigTab('new',this)">Nouvelle signature</button>
-          <button onclick="switchSigTab('saved',this)">Enregistrées (<span id="saved-count">0</span>)</button>
-        </div>
-        <div id="sig-new-panel" style="display:flex;flex-direction:column;gap:12px">
-          <div class="mode-btns">
-            <button class="active" id="btn-draw" onclick="setSigMode('draw')">Dessiner</button>
-            <button id="btn-type" onclick="setSigMode('type')">Taper</button>
+        <!-- COMPRESS -->
+        <div class="tool" id="tool-compress">
+          <div class="dropzone" onclick="document.getElementById('f-compress').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-compress')">
+            <div class="dz-icon">📂</div>
+            <p>Glissez votre PDF ici ou cliquez pour sélectionner</p>
+            <div class="dz-hint">Format accepté : .pdf</div>
           </div>
-          <div class="color-picker">
-            <span>Couleur :</span>
-            <div class="color-dot selected" style="background:#38bdf8" onclick="setSigColor('#38bdf8',this)"></div>
-            <div class="color-dot" style="background:#6366f1" onclick="setSigColor('#6366f1',this)"></div>
-            <div class="color-dot" style="background:#34d399" onclick="setSigColor('#34d399',this)"></div>
-            <div class="color-dot" style="background:#f87171" onclick="setSigColor('#f87171',this)"></div>
-            <div class="color-dot" style="background:#fbbf24" onclick="setSigColor('#fbbf24',this)"></div>
-            <div class="color-dot" style="background:#e2e8f0" onclick="setSigColor('#e2e8f0',this)"></div>
-            <input type="color" value="#38bdf8" onchange="setSigColor(this.value,null)" style="width:24px;height:24px;border-radius:50%;border:none;padding:0;cursor:pointer">
+          <input type="file" id="f-compress" accept=".pdf" style="display:none" onchange="compressLoad(this)">
+          <div id="compress-info" style="display:none;color:var(--text-secondary);font-size:13px;font-weight:500"></div>
+          <div id="compress-result" style="display:none" class="result-box">
+            <div class="title">Compression terminée</div>
+            <div class="info" id="compress-stats"></div>
+            <button class="btn success" style="margin-top:14px;width:auto;padding:12px 28px" onclick="triggerDownload(window._compressBytes,'compresse_'+window._compressName)">Télécharger</button>
           </div>
-          <div id="draw-panel">
-            <div style="font-size:12px;color:#64748b;margin-bottom:8px;font-weight:500">Dessine ta signature :</div>
-            <canvas id="sigCanvas" width="600" height="180"></canvas>
-            <button onclick="clearCanvas()" style="margin-top:8px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit">Effacer</button>
-          </div>
-          <div id="type-panel" style="display:none">
-            <div style="font-size:12px;color:#64748b;margin-bottom:8px;font-weight:500">Tape ton nom :</div>
-            <input type="text" id="typedSig" placeholder="ex : Nicodème Dupont">
-          </div>
-          <div class="save-row">
-            <input type="text" id="sigNameInput" placeholder="Nom de la signature (optionnel)" style="flex:1">
-            <button class="save-btn" onclick="saveSignature()">Enregistrer</button>
-          </div>
-          <button class="btn" onclick="confirmSignature()">Placer sur le PDF</button>
+          <button class="btn" id="compress-btn" style="display:none" onclick="doCompress()">Compresser le fichier</button>
         </div>
-        <div id="sig-saved-panel" style="display:none;flex-direction:column;gap:10px">
-          <div id="saved-list"></div>
-          <button class="btn" id="use-saved-btn" style="display:none" onclick="useSavedSig()">Utiliser cette signature</button>
-        </div>
-      </div>
-      <div id="sign-place" style="display:none;flex-direction:column;gap:14px">
-        <div class="page-btns" id="page-btns"></div>
-        <div style="font-size:13px;color:#94a3b8;font-weight:500">Clique sur la page pour placer ta signature</div>
-        <div id="previewWrap" onclick="placeSig(event)">
-          <img id="pageImg" src="" alt="page">
-          <img id="sigOverlay" src="" alt="sig">
-        </div>
-        <div id="place-hint" style="display:none;font-size:12px;color:#60a5fa;text-align:center;font-weight:500">Clique ailleurs pour repositionner</div>
-        <div class="row">
-          <button class="btn secondary" style="flex:1" onclick="signStep('create')">Modifier</button>
-          <button class="btn" style="flex:2" id="apply-btn" onclick="applySignature()">Télécharger le PDF signé</button>
-        </div>
-      </div>
-      <div id="sign-done" style="display:none" class="done-screen">
-        <div class="icon">✅</div>
-        <h3>PDF signé téléchargé !</h3>
-        <p>Sauvegardé sur ton appareil.</p>
-        <button class="btn" onclick="signReset()">Signer un autre document</button>
-      </div>
-    </div>
 
-    <!-- PDF2WORD -->
-    <div class="tool" id="tool-pdf2word">
-      <div id="pdf2word-status" style="display:none;border-radius:12px;padding:14px;font-size:13px;margin-bottom:8px;font-weight:500"></div>
-      <div class="dropzone" onclick="pdf2wordClick()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="pdf2wordDrop(event,this)">
-        <div class="icon">📂</div><p>Glisse ton PDF ici</p>
-      </div>
-      <input type="file" id="f-pdf2word" accept=".pdf" style="display:none" onchange="pdf2wordLoad(this)">
-      <div id="pdf2word-info" style="display:none;color:#94a3b8;font-size:13px;font-weight:500"></div>
-      <div id="pdf2word-progress" style="display:none;flex-direction:column;gap:8px">
-        <div style="background:#0f172a;border-radius:8px;height:6px;overflow:hidden;border:1px solid #1e293b">
-          <div id="pdf2word-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);border-radius:8px;transition:width .4s ease"></div>
+        <!-- MERGE -->
+        <div class="tool" id="tool-merge">
+          <div class="dropzone" onclick="document.getElementById('f-merge').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-merge')">
+            <div class="dz-icon">📂</div>
+            <p>Glissez vos PDFs ici</p>
+            <div class="dz-hint">Plusieurs fichiers à la fois</div>
+          </div>
+          <input type="file" id="f-merge" accept=".pdf" multiple style="display:none" onchange="mergeAdd(this)">
+          <div id="merge-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button class="btn" id="merge-btn" style="display:none" onclick="doMerge()">Fusionner</button>
         </div>
-        <div id="pdf2word-progress-text" style="color:#94a3b8;font-size:12px;text-align:center;font-weight:500"></div>
-      </div>
-      <button class="btn" id="pdf2word-btn" style="display:none" onclick="doPdf2Word()">Convertir en Word</button>
-      <div id="pdf2word-result" style="display:none" class="result-box">
-        <div class="title">Conversion terminée</div>
-        <div class="info" id="pdf2word-stats"></div>
-        <button class="btn success" style="margin-top:12px;width:auto;padding:10px 20px" id="pdf2word-dl-btn">Télécharger le .docx</button>
+
+        <!-- SPLIT -->
+        <div class="tool" id="tool-split">
+          <div class="dropzone" onclick="document.getElementById('f-split').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-split')">
+            <div class="dz-icon">📂</div>
+            <p>Glissez votre PDF ici</p>
+            <div class="dz-hint">Format accepté : .pdf</div>
+          </div>
+          <input type="file" id="f-split" accept=".pdf" style="display:none" onchange="splitLoad(this)">
+          <div id="split-info" style="display:none;color:var(--text-secondary);font-size:13px;font-weight:500"></div>
+          <div id="split-controls" style="display:none">
+            <div class="row" style="margin-bottom:18px">
+              <span class="label">De la page</span>
+              <input type="number" id="split-from" value="1" min="1">
+              <span class="label">à</span>
+              <input type="number" id="split-to" value="1" min="1">
+            </div>
+            <button class="btn" onclick="doSplit()">Extraire les pages</button>
+          </div>
+        </div>
+
+        <!-- IMG2PDF -->
+        <div class="tool" id="tool-img2pdf">
+          <div class="dropzone" onclick="document.getElementById('f-img').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-img')">
+            <div class="dz-icon">📂</div>
+            <p>Glissez vos images ici</p>
+            <div class="dz-hint">Formats acceptés : JPG, PNG</div>
+          </div>
+          <input type="file" id="f-img" accept="image/png,image/jpeg" multiple style="display:none" onchange="imgAdd(this)">
+          <div id="img-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+          <button class="btn" id="img-btn" style="display:none" onclick="doImg2Pdf()">Convertir en PDF</button>
+        </div>
+
+        <!-- SIGN -->
+        <div class="tool" id="tool-sign">
+          <div id="sign-upload">
+            <div class="dropzone" onclick="document.getElementById('f-sign').click()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'f-sign')">
+              <div class="dz-icon">📂</div>
+              <p>Glissez votre PDF à signer ici</p>
+              <div class="dz-hint">Format accepté : .pdf</div>
+            </div>
+            <input type="file" id="f-sign" accept=".pdf" style="display:none" onchange="signLoad(this)">
+            <div id="sign-loading" style="display:none;color:var(--accent-blue);text-align:center;font-size:13px;font-weight:500;padding:10px">Chargement du PDF...</div>
+          </div>
+          <div id="sign-create" style="display:none;flex-direction:column;gap:14px">
+            <div style="color:var(--text-secondary);font-size:13px;font-weight:500" id="sign-filename"></div>
+            <div class="tabs">
+              <button class="active" onclick="switchSigTab('new',this)">Nouvelle signature</button>
+              <button onclick="switchSigTab('saved',this)">Enregistrées (<span id="saved-count">0</span>)</button>
+            </div>
+            <div id="sig-new-panel" style="display:flex;flex-direction:column;gap:12px">
+              <div class="mode-btns">
+                <button class="active" id="btn-draw" onclick="setSigMode('draw')">Dessiner</button>
+                <button id="btn-type" onclick="setSigMode('type')">Taper</button>
+              </div>
+              <div class="color-picker">
+                <span>Couleur :</span>
+                <div class="color-dot selected" style="background:#38bdf8" onclick="setSigColor('#38bdf8',this)"></div>
+                <div class="color-dot" style="background:#6366f1" onclick="setSigColor('#6366f1',this)"></div>
+                <div class="color-dot" style="background:#34d399" onclick="setSigColor('#34d399',this)"></div>
+                <div class="color-dot" style="background:#f87171" onclick="setSigColor('#f87171',this)"></div>
+                <div class="color-dot" style="background:#fbbf24" onclick="setSigColor('#fbbf24',this)"></div>
+                <div class="color-dot" style="background:#e2e8f0" onclick="setSigColor('#e2e8f0',this)"></div>
+                <input type="color" value="#38bdf8" onchange="setSigColor(this.value,null)" style="width:28px;height:28px;border-radius:50%;border:none;padding:0;cursor:pointer">
+              </div>
+              <div id="draw-panel">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600">Dessinez votre signature :</div>
+                <canvas id="sigCanvas" width="600" height="180"></canvas>
+                <button onclick="clearCanvas()" style="margin-top:8px;background:none;border:none;color:var(--accent-red);cursor:pointer;font-size:12px;font-weight:600;font-family:inherit">Effacer</button>
+              </div>
+              <div id="type-panel" style="display:none">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600">Tapez votre nom :</div>
+                <input type="text" id="typedSig" placeholder="ex : Jean Dupont">
+              </div>
+              <div class="save-row">
+                <input type="text" id="sigNameInput" placeholder="Nom de la signature (optionnel)" style="flex:1">
+                <button class="save-btn" onclick="saveSignature()">Enregistrer</button>
+              </div>
+              <button class="btn" onclick="confirmSignature()">Placer sur le PDF</button>
+            </div>
+            <div id="sig-saved-panel" style="display:none;flex-direction:column;gap:10px">
+              <div id="saved-list"></div>
+              <button class="btn" id="use-saved-btn" style="display:none" onclick="useSavedSig()">Utiliser cette signature</button>
+            </div>
+          </div>
+          <div id="sign-place" style="display:none;flex-direction:column;gap:14px">
+            <div class="page-btns" id="page-btns"></div>
+            <div style="font-size:13px;color:var(--text-muted);font-weight:500">Cliquez sur la page pour placer votre signature</div>
+            <div id="previewWrap" onclick="placeSig(event)">
+              <img id="pageImg" src="" alt="page">
+              <img id="sigOverlay" src="" alt="sig">
+            </div>
+            <div id="place-hint" style="display:none;font-size:12px;color:var(--accent-blue);text-align:center;font-weight:500">Cliquez ailleurs pour repositionner</div>
+            <div class="row">
+              <button class="btn secondary" style="flex:1" onclick="signStep('create')">Modifier</button>
+              <button class="btn" style="flex:2" id="apply-btn" onclick="applySignature()">Télécharger le PDF signé</button>
+            </div>
+          </div>
+          <div id="sign-done" style="display:none" class="done-screen">
+            <div class="icon">✅</div>
+            <h3>PDF signé téléchargé !</h3>
+            <p>Sauvegardé sur votre appareil.</p>
+            <button class="btn" onclick="signReset()">Signer un autre document</button>
+          </div>
+        </div>
+
+        <!-- PDF2WORD -->
+        <div class="tool" id="tool-pdf2word">
+          <div id="pdf2word-status" style="display:none;border-radius:var(--radius-md);padding:16px;font-size:13px;font-weight:500"></div>
+          <div class="dropzone" onclick="pdf2wordClick()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="pdf2wordDrop(event,this)">
+            <div class="dz-icon">📂</div>
+            <p>Glissez votre PDF ici</p>
+            <div class="dz-hint">Format accepté : .pdf</div>
+          </div>
+          <input type="file" id="f-pdf2word" accept=".pdf" style="display:none" onchange="pdf2wordLoad(this)">
+          <div id="pdf2word-info" style="display:none;color:var(--text-secondary);font-size:13px;font-weight:500"></div>
+          <div id="pdf2word-progress" style="display:none;flex-direction:column;gap:10px">
+            <div style="background:var(--bg-elevated);border-radius:10px;height:6px;overflow:hidden;border:1px solid var(--border-medium)">
+              <div id="pdf2word-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent-blue),var(--accent-purple));border-radius:10px;transition:width .4s ease"></div>
+            </div>
+            <div id="pdf2word-progress-text" style="color:var(--text-muted);font-size:12px;text-align:center;font-weight:500"></div>
+          </div>
+          <button class="btn" id="pdf2word-btn" style="display:none" onclick="doPdf2Word()">Convertir en Word</button>
+          <div id="pdf2word-result" style="display:none" class="result-box">
+            <div class="title">Conversion terminée</div>
+            <div class="info" id="pdf2word-stats"></div>
+            <button class="btn success" style="margin-top:14px;width:auto;padding:12px 28px" id="pdf2word-dl-btn">Télécharger le .docx</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
-  <p class="footer">PDF TOOLKIT — 100% LOCAL • AUCUNE DONNÉE ENVOYÉE</p>
+  <!-- ─── FEATURES ─────────────────────────────────────────────── -->
+  <div class="features-section" id="features-section">
+    <div class="section-header">
+      <h2>Pourquoi PDF Toolkit ?</h2>
+      <p>Des outils conçus pour la simplicité et la sécurité</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h4>100% Privé</h4>
+        <p>Vos fichiers ne quittent jamais votre appareil. Aucun serveur distant.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h4>Ultra Rapide</h4>
+        <p>Traitement instantané en local. Pas de temps d'attente.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h4>Simple à utiliser</h4>
+        <p>Interface épurée, pas de compte requis. Glissez, cliquez, c'est fait.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Créé par <span>Nicodinho</span> — PDF Toolkit v1.0
+  </div>
 </div>
 
 <!-- DOWNLOAD MODAL -->
 <div class="modal-overlay" id="dl-modal">
   <div class="modal">
-    <div style="font-size:36px;text-align:center;margin-bottom:12px">💾</div>
+    <div style="font-size:40px;text-align:center;margin-bottom:16px">💾</div>
     <h3>Nom du fichier</h3>
-    <p>Tu peux renommer ton fichier avant de télécharger</p>
+    <p>Renommez votre fichier avant de télécharger</p>
     <div class="filename-row">
       <input type="text" id="dl-name" onkeydown="if(event.key==='Enter')confirmDownload()">
       <span>.pdf</span>
@@ -731,29 +1220,58 @@
   </div>
 </div>
 
-<!-- WARN MODAL (inutilisé — conversion 100% locale) -->
-
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ─── TOOL SWITCH ──────────────────────────────────────────────────────────────
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+function goHome() {
+  closeTool();
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.querySelector('.nav-link').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function scrollToFeatures() {
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.nav-link')[1].classList.add('active');
+  document.getElementById('features-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ─── TOOL META ────────────────────────────────────────────────────────────────
 const TOOLS_META = {
-  compress: { title: '📉 Compression PDF', local: true },
-  merge:    { title: '📑 Fusionner des PDFs', local: true },
-  split:    { title: '✂️ Découper un PDF', local: true },
-  img2pdf:  { title: '🖼️ Image → PDF', local: true },
-  sign:     { title: '✍️ Signer un PDF', local: true },
-  pdf2word: { title: '📄 PDF → Word', local: true },
+  compress: { title: 'Compresser un PDF', desc: 'Réduire la taille de vos fichiers', icon: '📉', gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)' },
+  merge:    { title: 'Fusionner des PDFs', desc: 'Combiner plusieurs fichiers en un seul', icon: '📑', gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' },
+  split:    { title: 'Découper un PDF', desc: 'Extraire des pages spécifiques', icon: '✂️', gradient: 'linear-gradient(135deg, #f43f5e, #e11d48)' },
+  img2pdf:  { title: 'Image vers PDF', desc: 'Convertir vos images en PDF', icon: '🖼️', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+  sign:     { title: 'Signer un PDF', desc: 'Apposer votre signature', icon: '✍️', gradient: 'linear-gradient(135deg, #10b981, #059669)' },
+  pdf2word: { title: 'PDF vers Word', desc: 'Convertir en fichier Word', icon: '📝', gradient: 'linear-gradient(135deg, #06b6d4, #0891b2)' },
 };
-function switchTool(id, btn) {
+
+let _currentTool = null;
+
+function openTool(id) {
+  _currentTool = id;
+  const meta = TOOLS_META[id];
+  document.getElementById('tv-icon').style.background = meta.gradient;
+  document.getElementById('tv-icon').textContent = meta.icon;
+  document.getElementById('tv-title').textContent = meta.title;
+  document.getElementById('tv-desc').textContent = meta.desc;
   document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('tool-' + id).classList.add('active');
-  btn.classList.add('active');
-  document.getElementById('toolTitle').textContent = TOOLS_META[id].title;
-  const badge = document.getElementById('toolBadge');
-  badge.textContent = TOOLS_META[id].local ? '100% Local' : 'API externe';
-  badge.className = 'badge ' + (TOOLS_META[id].local ? 'local' : 'external');
+  document.getElementById('tools-grid').classList.add('hidden');
+  const tv = document.getElementById('tool-view');
+  tv.classList.add('visible');
+  tv.style.animation = 'none';
+  tv.offsetHeight;
+  tv.style.animation = '';
+  // Hide features when tool is open
+  document.getElementById('features-section').style.display = 'none';
+}
+
+function closeTool() {
+  _currentTool = null;
+  document.getElementById('tools-grid').classList.remove('hidden');
+  document.getElementById('tool-view').classList.remove('visible');
+  document.getElementById('features-section').style.display = '';
 }
 
 // ─── DROPZONE ──────────────────────────────────────────────────────────────────
@@ -811,7 +1329,7 @@ async function doCompress() {
     'Avant : ' + (buf.byteLength/1024).toFixed(1) + ' Ko → Après : ' + (bytes.byteLength/1024).toFixed(1) + ' Ko<br>Réduction : ' + (parseFloat(saved)>0?saved:'0') + '%';
   document.getElementById('compress-result').style.display = 'block';
   document.getElementById('compress-btn').style.display = 'none';
-  btn.textContent = 'Compresser'; btn.disabled = false;
+  btn.textContent = 'Compresser le fichier'; btn.disabled = false;
 }
 
 // ─── MERGE ─────────────────────────────────────────────────────────────────────
@@ -881,7 +1399,7 @@ function imgAdd(input) {
   list.innerHTML = '';
   _imgFiles.forEach(f => {
     const s = document.createElement('span');
-    s.style.cssText = 'background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:6px 12px;font-size:12px;color:#e2e8f0;font-weight:500';
+    s.style.cssText = 'background:var(--bg-elevated);border:1px solid var(--border-medium);border-radius:10px;padding:8px 14px;font-size:12px;color:var(--text-primary);font-weight:500';
     s.textContent = '🖼️ ' + f.name;
     list.appendChild(s);
   });
@@ -957,7 +1475,6 @@ function setSigColor(color, dot) {
   document.getElementById('typedSig').style.color = color;
 }
 
-// Canvas drawing
 const canvas = document.getElementById('sigCanvas');
 const ctx = canvas.getContext('2d');
 function getPos(e) {
@@ -969,8 +1486,7 @@ function getPos(e) {
 }
 canvas.addEventListener('mousedown', e => { _sigDrawing = true; const p = getPos(e); _sigLastPos = p; ctx.beginPath(); ctx.moveTo(p.x, p.y); });
 canvas.addEventListener('mousemove', e => {
-  if (!_sigDrawing) return;
-  const p = getPos(e);
+  if (!_sigDrawing) return; const p = getPos(e);
   ctx.beginPath(); ctx.moveTo(_sigLastPos.x, _sigLastPos.y); ctx.lineTo(p.x, p.y);
   ctx.strokeStyle = _sigColor; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
   _sigLastPos = p;
@@ -979,8 +1495,7 @@ canvas.addEventListener('mouseup', () => { _sigDrawing = false; });
 canvas.addEventListener('mouseleave', () => { _sigDrawing = false; });
 canvas.addEventListener('touchstart', e => { e.preventDefault(); _sigDrawing = true; const p = getPos(e); _sigLastPos = p; ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
 canvas.addEventListener('touchmove', e => {
-  if (!_sigDrawing) return; e.preventDefault();
-  const p = getPos(e);
+  if (!_sigDrawing) return; e.preventDefault(); const p = getPos(e);
   ctx.beginPath(); ctx.moveTo(_sigLastPos.x, _sigLastPos.y); ctx.lineTo(p.x, p.y);
   ctx.strokeStyle = _sigColor; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
   _sigLastPos = p;
@@ -1012,7 +1527,7 @@ function confirmSignature() {
 }
 
 function saveSignature() {
-  const img = buildSigImg(); if (!img) { alert('Crée d\'abord une signature'); return; }
+  const img = buildSigImg(); if (!img) { alert('Créez d\'abord une signature'); return; }
   const nameInput = document.getElementById('sigNameInput').value.trim();
   const typed = document.getElementById('typedSig').value.trim();
   const name = nameInput || (_sigMode === 'type' ? typed : 'Signature ' + (_savedSigs.length + 1));
@@ -1033,7 +1548,7 @@ function renderSavedSigs() {
   _savedSigs.forEach(sig => {
     const d = document.createElement('div');
     d.className = 'saved-sig' + (_selectedSaved?.id === sig.id ? ' selected' : '');
-    d.innerHTML = '<img src="' + sig.img + '"><div class="info"><div class="name">' + sig.name + '</div><div class="meta">' + (sig.type==='draw'?'Dessinée':'Tapée') + ' · ' + new Date(sig.createdAt).toLocaleDateString('fr-FR') + '</div></div>' + (_selectedSaved?.id===sig.id?'<span style="color:#60a5fa;font-size:17px">✓</span>':'') + '<button onclick="deleteSig('+sig.id+',event)" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:15px;padding:0 4px">✕</button>';
+    d.innerHTML = '<img src="' + sig.img + '"><div class="info"><div class="name">' + sig.name + '</div><div class="meta">' + (sig.type==='draw'?'Dessinée':'Tapée') + ' · ' + new Date(sig.createdAt).toLocaleDateString('fr-FR') + '</div></div>' + (_selectedSaved?.id===sig.id?'<span style="color:var(--accent-blue);font-size:17px">✓</span>':'') + '<button onclick="deleteSig('+sig.id+',event)" style="background:none;border:none;color:var(--accent-red);cursor:pointer;font-size:14px;padding:0 4px">✕</button>';
     d.onclick = () => { _selectedSaved = sig; renderSavedSigs(); document.getElementById('use-saved-btn').style.display = 'block'; };
     list.appendChild(d);
   });
@@ -1083,7 +1598,7 @@ function placeSig(e) {
 }
 
 async function applySignature() {
-  if (!_sigPlacement) { alert('Clique sur la page pour placer ta signature'); return; }
+  if (!_sigPlacement) { alert('Cliquez sur la page pour placer votre signature'); return; }
   const btn = document.getElementById('apply-btn');
   btn.textContent = 'Application...'; btn.disabled = true;
   const { PDFDocument } = PDFLib;
@@ -1110,37 +1625,35 @@ function signReset() {
   signStep('upload');
 }
 
-// ─── PDF2WORD (100% local via pdf2docx — auto-install silencieux) ─────────────
+// ─── PDF2WORD ─────────────────────────────────────────────────────────────────
 let _pdf2wordFile = null, _pdf2wordDocxBytes = null, _pdf2wordReady = false;
 
 (async function checkPdf2WordReady() {
   if (!window.electronAPI?.checkPdf2Word) return;
   const el = document.getElementById('pdf2word-status');
   el.style.display = 'block';
-  el.style.background = 'linear-gradient(135deg, #3b82f610, #6366f110)';
-  el.style.border = '1px solid #3b82f625';
-  el.style.color = '#60a5fa';
+  el.style.background = 'rgba(59,130,246,0.05)';
+  el.style.border = '1px solid rgba(59,130,246,0.12)';
+  el.style.color = 'var(--accent-blue)';
   el.innerHTML = 'Préparation du module de conversion...';
-
   const status = await window.electronAPI.checkPdf2Word();
   if (status.available) {
     _pdf2wordReady = true;
     el.style.display = 'none';
   } else if (status.reason === 'python_missing') {
-    el.style.background = 'linear-gradient(135deg, #f59e0b10, #ef444410)';
-    el.style.border = '1px solid #f59e0b25';
+    el.style.background = 'rgba(245,158,11,0.05)';
+    el.style.border = '1px solid rgba(245,158,11,0.12)';
     el.style.color = '#fbbf24';
     el.innerHTML = 'Cette fonctionnalité n\'est pas disponible sur ce système.';
   } else {
-    el.style.background = 'linear-gradient(135deg, #f59e0b10, #ef444410)';
-    el.style.border = '1px solid #f59e0b25';
+    el.style.background = 'rgba(245,158,11,0.05)';
+    el.style.border = '1px solid rgba(245,158,11,0.12)';
     el.style.color = '#fbbf24';
-    el.innerHTML = 'La préparation a échoué. Réessaye en relançant l\'application.';
+    el.innerHTML = 'La préparation a échoué. Réessayez en relançant l\'application.';
   }
 })();
 
 function pdf2wordClick() { document.getElementById('f-pdf2word').click(); }
-
 function pdf2wordDrop(e, el) {
   dzLeave(el); e.preventDefault();
   const dt = new DataTransfer();
@@ -1148,7 +1661,6 @@ function pdf2wordDrop(e, el) {
   document.getElementById('f-pdf2word').files = dt.files;
   pdf2wordLoad({ files: dt.files });
 }
-
 function pdf2wordLoad(input) {
   _pdf2wordFile = input.files[0];
   _pdf2wordDocxBytes = null;
@@ -1158,23 +1670,19 @@ function pdf2wordLoad(input) {
   document.getElementById('pdf2word-result').style.display = 'none';
   document.getElementById('pdf2word-progress').style.display = 'none';
 }
-
 async function doPdf2Word() {
   if (!window.electronAPI?.convertPdfToWord) {
     alert('Cette fonctionnalité nécessite l\'application de bureau.');
     return;
   }
-
   const btn = document.getElementById('pdf2word-btn');
   btn.textContent = 'Conversion en cours...'; btn.disabled = true;
-
   const progress = document.getElementById('pdf2word-progress');
   const bar = document.getElementById('pdf2word-bar');
   const progressText = document.getElementById('pdf2word-progress-text');
   progress.style.display = 'flex';
   bar.style.width = '5%';
   progressText.textContent = 'Préparation...';
-
   let pct = 5;
   const progressInterval = setInterval(() => {
     if (pct < 85) { pct += Math.random() * 5; bar.style.width = Math.min(pct, 85) + '%'; }
@@ -1184,28 +1692,21 @@ async function doPdf2Word() {
     else if (pct < 75) progressText.textContent = 'Extraction du contenu...';
     else progressText.textContent = 'Génération du fichier Word...';
   }, 600);
-
   try {
     const arrayBuffer = await _pdf2wordFile.arrayBuffer();
     const result = await window.electronAPI.convertPdfToWord(arrayBuffer);
-
     clearInterval(progressInterval);
-
     if (result.success) {
       bar.style.width = '100%';
       progressText.textContent = 'Terminé !';
       _pdf2wordReady = true;
-
       _pdf2wordDocxBytes = new Uint8Array(result.data);
-
       document.getElementById('pdf2word-stats').innerHTML =
         'Fichier : ' + _pdf2wordFile.name.replace(/\.pdf$/i, '.docx') +
         ' (' + (_pdf2wordDocxBytes.byteLength / 1024).toFixed(1) + ' Ko)';
       document.getElementById('pdf2word-result').style.display = 'block';
       document.getElementById('pdf2word-btn').style.display = 'none';
-
       document.getElementById('pdf2word-status').style.display = 'none';
-
       document.getElementById('pdf2word-dl-btn').onclick = () => {
         const blob = new Blob([_pdf2wordDocxBytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
         const url = URL.createObjectURL(blob);
@@ -1216,17 +1717,14 @@ async function doPdf2Word() {
         URL.revokeObjectURL(url);
       };
     } else {
-      bar.style.width = '0%';
-      progress.style.display = 'none';
-      alert('La conversion a échoué. Réessaye ou relance l\'application.');
+      bar.style.width = '0%'; progress.style.display = 'none';
+      alert('La conversion a échoué. Réessayez ou relancez l\'application.');
     }
   } catch (err) {
     clearInterval(progressInterval);
-    bar.style.width = '0%';
-    progress.style.display = 'none';
-    alert('Une erreur est survenue. Réessaye.');
+    bar.style.width = '0%'; progress.style.display = 'none';
+    alert('Une erreur est survenue. Réessayez.');
   }
-
   btn.textContent = 'Convertir en Word'; btn.disabled = false;
 }
 </script>
