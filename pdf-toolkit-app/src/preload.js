@@ -1,10 +1,11 @@
 // Preload script — pont sécurisé entre le renderer et Node.js
-// Pour l'instant minimal, mais permet d'ajouter des APIs natives plus tard
-// (ex: sauvegarder directement sur le disque via dialog.showSaveDialog)
-
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
-  isElectron: true
+  isElectron: true,
+
+  // PDF → Word : conversion locale via pdf2docx
+  convertPdfToWord: (pdfArrayBuffer) => ipcRenderer.invoke('pdf2word:convert', pdfArrayBuffer),
+  checkPdf2Word: () => ipcRenderer.invoke('pdf2word:check'),
 });

@@ -256,17 +256,28 @@
 
     <!-- PDF2WORD -->
     <div class="tool" id="tool-pdf2word">
-      <div class="warn-box">⚠️ Cette fonctionnalité envoie ton fichier à un serveur externe. Tu seras averti avant de continuer.</div>
+      <div id="pdf2word-status" style="display:none;border-radius:10px;padding:12px;font-size:13px;margin-bottom:8px"></div>
       <div class="dropzone" onclick="pdf2wordClick()" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="pdf2wordDrop(event,this)">
         <div class="icon">📂</div><p>Glisse ton PDF ici</p>
       </div>
       <input type="file" id="f-pdf2word" accept=".pdf" style="display:none" onchange="pdf2wordLoad(this)">
       <div id="pdf2word-info" style="display:none;color:#7dd3fc;font-size:13px"></div>
-      <button class="btn warn" id="pdf2word-btn" style="display:none" onclick="doPdf2Word()">Convertir en Word</button>
+      <div id="pdf2word-progress" style="display:none;flex-direction:column;gap:8px">
+        <div style="background:#0a1929;border-radius:8px;height:6px;overflow:hidden">
+          <div id="pdf2word-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#38bdf8,#1976d2);border-radius:8px;transition:width .4s ease"></div>
+        </div>
+        <div id="pdf2word-progress-text" style="color:#64b5d6;font-size:12px;text-align:center"></div>
+      </div>
+      <button class="btn" id="pdf2word-btn" style="display:none" onclick="doPdf2Word()">Convertir en Word</button>
+      <div id="pdf2word-result" style="display:none" class="result-box">
+        <div class="title">✅ Conversion terminée</div>
+        <div class="info" id="pdf2word-stats"></div>
+        <button class="btn success" style="margin-top:10px;width:auto;padding:8px 18px" id="pdf2word-dl-btn">⬇️ Télécharger le .docx</button>
+      </div>
     </div>
   </div>
 
-  <p class="footer">PDF Toolkit — Traitement local • Aucune donnée envoyée (sauf PDF→Word)</p>
+  <p class="footer">PDF Toolkit — 100% local • Aucune donnée envoyée</p>
 </div>
 
 <!-- DOWNLOAD MODAL -->
@@ -286,18 +297,7 @@
   </div>
 </div>
 
-<!-- WARN MODAL -->
-<div class="modal-overlay" id="warn-modal">
-  <div class="modal warn-modal">
-    <div style="font-size:38px;text-align:center;margin-bottom:10px">⚠️</div>
-    <h3>Avertissement de confidentialité</h3>
-    <p>La conversion <strong style="color:#fff">PDF → Word</strong> nécessite l'envoi de ton fichier vers un <strong style="color:#fbbf24">serveur externe</strong>.<br><br>Si ton fichier contient des données sensibles, il est recommandé de <strong style="color:#fbbf24">ne pas continuer</strong>.</p>
-    <div class="modal-btns">
-      <button class="cancel" onclick="closeWarnModal()">Annuler</button>
-      <button class="confirm" onclick="acceptWarn()">Je comprends, continuer</button>
-    </div>
-  </div>
-</div>
+<!-- WARN MODAL (inutilisé — conversion 100% locale) -->
 
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -309,7 +309,7 @@ const TOOLS_META = {
   split:    { title: '✂️ Découper un PDF', local: true },
   img2pdf:  { title: '🖼️ Image → PDF', local: true },
   sign:     { title: '✍️ Signer un PDF', local: true },
-  pdf2word: { title: '📄 PDF → Word', local: false },
+  pdf2word: { title: '📄 PDF → Word', local: true },
 };
 function switchTool(id, btn) {
   document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
@@ -676,23 +676,114 @@ function signReset() {
   signStep('upload');
 }
 
-// ─── PDF2WORD ──────────────────────────────────────────────────────────────────
-let _pdf2wordWarned = false, _pdf2wordFile = null;
+// ─── PDF2WORD (100% local via pdf2docx) ───────────────────────────────────────
+let _pdf2wordFile = null, _pdf2wordDocxBytes = null;
+
+// Vérifier la disponibilité au chargement
+(async function checkPdf2WordReady() {
+  if (!window.electronAPI?.checkPdf2Word) return;
+  const status = await window.electronAPI.checkPdf2Word();
+  const el = document.getElementById('pdf2word-status');
+  if (!status.available) {
+    el.style.display = 'block';
+    if (status.reason === 'python_missing') {
+      el.style.background = '#451a0322'; el.style.border = '1px solid #f59e0b'; el.style.color = '#fbbf24';
+      el.innerHTML = '⚠️ <strong>Python 3</strong> n\'est pas installé. Installe-le depuis <a href="https://python.org" style="color:#38bdf8" target="_blank">python.org</a>';
+    } else {
+      el.style.background = '#451a0322'; el.style.border = '1px solid #f59e0b'; el.style.color = '#fbbf24';
+      el.innerHTML = '⚠️ Le module <strong>pdf2docx</strong> n\'est pas installé. Exécute dans ton terminal :<br><code style="background:#0a1929;padding:4px 8px;border-radius:4px;margin-top:4px;display:inline-block;color:#38bdf8">pip install pdf2docx</code>';
+    }
+  }
+})();
+
 function pdf2wordClick() { document.getElementById('f-pdf2word').click(); }
-function pdf2wordDrop(e, el) { dzLeave(el); e.preventDefault(); const dt = new DataTransfer(); Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f)); document.getElementById('f-pdf2word').files = dt.files; pdf2wordLoad({ files: dt.files }); }
+
+function pdf2wordDrop(e, el) {
+  dzLeave(el); e.preventDefault();
+  const dt = new DataTransfer();
+  Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+  document.getElementById('f-pdf2word').files = dt.files;
+  pdf2wordLoad({ files: dt.files });
+}
+
 function pdf2wordLoad(input) {
   _pdf2wordFile = input.files[0];
-  if (!_pdf2wordWarned) { document.getElementById('warn-modal').classList.add('show'); return; }
-  showPdf2WordFile();
-}
-function showPdf2WordFile() {
-  document.getElementById('pdf2word-info').textContent = '📎 ' + _pdf2wordFile.name;
+  _pdf2wordDocxBytes = null;
+  document.getElementById('pdf2word-info').textContent = '📎 ' + _pdf2wordFile.name + ' (' + (_pdf2wordFile.size / 1024).toFixed(1) + ' Ko)';
   document.getElementById('pdf2word-info').style.display = 'block';
   document.getElementById('pdf2word-btn').style.display = 'block';
+  document.getElementById('pdf2word-result').style.display = 'none';
+  document.getElementById('pdf2word-progress').style.display = 'none';
 }
-function closeWarnModal() { document.getElementById('warn-modal').classList.remove('show'); _pdf2wordFile = null; }
-function acceptWarn() { _pdf2wordWarned = true; document.getElementById('warn-modal').classList.remove('show'); showPdf2WordFile(); }
-function doPdf2Word() { alert('⚠️ Pour activer cette fonctionnalité, connecte une clé API iLovePDF dans le code.'); }
+
+async function doPdf2Word() {
+  if (!window.electronAPI?.convertPdfToWord) {
+    alert('Cette fonctionnalité nécessite l\'application Electron (pas le navigateur).');
+    return;
+  }
+
+  const btn = document.getElementById('pdf2word-btn');
+  btn.textContent = 'Conversion en cours...'; btn.disabled = true;
+
+  // Afficher la barre de progression
+  const progress = document.getElementById('pdf2word-progress');
+  const bar = document.getElementById('pdf2word-bar');
+  const progressText = document.getElementById('pdf2word-progress-text');
+  progress.style.display = 'flex';
+  bar.style.width = '10%';
+  progressText.textContent = 'Lecture du PDF...';
+
+  // Animation de progression simulée (la conversion réelle est côté Python)
+  let pct = 10;
+  const progressInterval = setInterval(() => {
+    if (pct < 85) { pct += Math.random() * 8; bar.style.width = Math.min(pct, 85) + '%'; }
+    if (pct > 30 && pct < 50) progressText.textContent = 'Analyse de la mise en page...';
+    else if (pct >= 50 && pct < 70) progressText.textContent = 'Extraction du contenu...';
+    else if (pct >= 70) progressText.textContent = 'Génération du fichier Word...';
+  }, 500);
+
+  try {
+    const arrayBuffer = await _pdf2wordFile.arrayBuffer();
+    const result = await window.electronAPI.convertPdfToWord(arrayBuffer);
+
+    clearInterval(progressInterval);
+
+    if (result.success) {
+      bar.style.width = '100%';
+      progressText.textContent = 'Terminé !';
+
+      _pdf2wordDocxBytes = new Uint8Array(result.data);
+
+      document.getElementById('pdf2word-stats').innerHTML =
+        'Fichier : ' + _pdf2wordFile.name.replace(/\.pdf$/i, '.docx') +
+        ' (' + (_pdf2wordDocxBytes.byteLength / 1024).toFixed(1) + ' Ko)';
+      document.getElementById('pdf2word-result').style.display = 'block';
+      document.getElementById('pdf2word-btn').style.display = 'none';
+
+      // Brancher le bouton de téléchargement
+      document.getElementById('pdf2word-dl-btn').onclick = () => {
+        const blob = new Blob([_pdf2wordDocxBytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = _pdf2wordFile.name.replace(/\.pdf$/i, '.docx');
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      bar.style.width = '0%';
+      progress.style.display = 'none';
+      alert('Erreur : ' + result.error);
+    }
+  } catch (err) {
+    clearInterval(progressInterval);
+    bar.style.width = '0%';
+    progress.style.display = 'none';
+    alert('Erreur inattendue : ' + err.message);
+  }
+
+  btn.textContent = 'Convertir en Word'; btn.disabled = false;
+}
 </script>
 </body>
 </html>
