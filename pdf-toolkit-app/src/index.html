@@ -676,23 +676,28 @@ function signReset() {
   signStep('upload');
 }
 
-// ─── PDF2WORD (100% local via pdf2docx) ───────────────────────────────────────
-let _pdf2wordFile = null, _pdf2wordDocxBytes = null;
+// ─── PDF2WORD (100% local via pdf2docx — auto-install silencieux) ─────────────
+let _pdf2wordFile = null, _pdf2wordDocxBytes = null, _pdf2wordReady = false;
 
-// Vérifier la disponibilité au chargement
+// Préparation silencieuse au chargement (vérifie + installe si besoin)
 (async function checkPdf2WordReady() {
   if (!window.electronAPI?.checkPdf2Word) return;
-  const status = await window.electronAPI.checkPdf2Word();
   const el = document.getElementById('pdf2word-status');
-  if (!status.available) {
-    el.style.display = 'block';
-    if (status.reason === 'python_missing') {
-      el.style.background = '#451a0322'; el.style.border = '1px solid #f59e0b'; el.style.color = '#fbbf24';
-      el.innerHTML = '⚠️ <strong>Python 3</strong> n\'est pas installé. Installe-le depuis <a href="https://python.org" style="color:#38bdf8" target="_blank">python.org</a>';
-    } else {
-      el.style.background = '#451a0322'; el.style.border = '1px solid #f59e0b'; el.style.color = '#fbbf24';
-      el.innerHTML = '⚠️ Le module <strong>pdf2docx</strong> n\'est pas installé. Exécute dans ton terminal :<br><code style="background:#0a1929;padding:4px 8px;border-radius:4px;margin-top:4px;display:inline-block;color:#38bdf8">pip install pdf2docx</code>';
-    }
+  // Afficher un message discret pendant la préparation
+  el.style.display = 'block';
+  el.style.background = '#0e749022'; el.style.border = '1px solid #0ea5e9'; el.style.color = '#38bdf8';
+  el.innerHTML = '🔄 Préparation du module de conversion...';
+
+  const status = await window.electronAPI.checkPdf2Word();
+  if (status.available) {
+    _pdf2wordReady = true;
+    el.style.display = 'none'; // Tout est prêt, on cache le message
+  } else if (status.reason === 'python_missing') {
+    el.style.background = '#451a0322'; el.style.border = '1px solid #f59e0b'; el.style.color = '#fbbf24';
+    el.innerHTML = '⚠️ Cette fonctionnalité n\'est pas disponible sur ce système.';
+  } else {
+    el.style.background = '#451a0322'; el.style.border = '1px solid #f59e0b'; el.style.color = '#fbbf24';
+    el.innerHTML = '⚠️ La préparation a échoué. Réessaye en relançant l\'application.';
   }
 })();
 
@@ -718,7 +723,7 @@ function pdf2wordLoad(input) {
 
 async function doPdf2Word() {
   if (!window.electronAPI?.convertPdfToWord) {
-    alert('Cette fonctionnalité nécessite l\'application Electron (pas le navigateur).');
+    alert('Cette fonctionnalité nécessite l\'application de bureau.');
     return;
   }
 
@@ -730,17 +735,20 @@ async function doPdf2Word() {
   const bar = document.getElementById('pdf2word-bar');
   const progressText = document.getElementById('pdf2word-progress-text');
   progress.style.display = 'flex';
-  bar.style.width = '10%';
-  progressText.textContent = 'Lecture du PDF...';
+  bar.style.width = '5%';
+  progressText.textContent = 'Préparation...';
 
-  // Animation de progression simulée (la conversion réelle est côté Python)
-  let pct = 10;
+  // La première conversion peut inclure une installation silencieuse (~30s)
+  // Les suivantes sont instantanées grâce au cache
+  let pct = 5;
   const progressInterval = setInterval(() => {
-    if (pct < 85) { pct += Math.random() * 8; bar.style.width = Math.min(pct, 85) + '%'; }
-    if (pct > 30 && pct < 50) progressText.textContent = 'Analyse de la mise en page...';
-    else if (pct >= 50 && pct < 70) progressText.textContent = 'Extraction du contenu...';
-    else if (pct >= 70) progressText.textContent = 'Génération du fichier Word...';
-  }, 500);
+    if (pct < 85) { pct += Math.random() * 5; bar.style.width = Math.min(pct, 85) + '%'; }
+    if (pct < 20) progressText.textContent = 'Préparation...';
+    else if (pct < 40) progressText.textContent = 'Lecture du PDF...';
+    else if (pct < 60) progressText.textContent = 'Analyse de la mise en page...';
+    else if (pct < 75) progressText.textContent = 'Extraction du contenu...';
+    else progressText.textContent = 'Génération du fichier Word...';
+  }, 600);
 
   try {
     const arrayBuffer = await _pdf2wordFile.arrayBuffer();
@@ -751,6 +759,7 @@ async function doPdf2Word() {
     if (result.success) {
       bar.style.width = '100%';
       progressText.textContent = 'Terminé !';
+      _pdf2wordReady = true;
 
       _pdf2wordDocxBytes = new Uint8Array(result.data);
 
@@ -759,6 +768,9 @@ async function doPdf2Word() {
         ' (' + (_pdf2wordDocxBytes.byteLength / 1024).toFixed(1) + ' Ko)';
       document.getElementById('pdf2word-result').style.display = 'block';
       document.getElementById('pdf2word-btn').style.display = 'none';
+
+      // Cacher le message de statut si encore visible
+      document.getElementById('pdf2word-status').style.display = 'none';
 
       // Brancher le bouton de téléchargement
       document.getElementById('pdf2word-dl-btn').onclick = () => {
@@ -773,13 +785,13 @@ async function doPdf2Word() {
     } else {
       bar.style.width = '0%';
       progress.style.display = 'none';
-      alert('Erreur : ' + result.error);
+      alert('La conversion a échoué. Réessaye ou relance l\'application.');
     }
   } catch (err) {
     clearInterval(progressInterval);
     bar.style.width = '0%';
     progress.style.display = 'none';
-    alert('Erreur inattendue : ' + err.message);
+    alert('Une erreur est survenue. Réessaye.');
   }
 
   btn.textContent = 'Convertir en Word'; btn.disabled = false;
