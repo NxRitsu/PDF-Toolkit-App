@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CreaVizione — Agence digitale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { background: #fff; font-family: 'Roboto', sans-serif; color: #0F0508; }
+
+  /* ── HEADER ── */
+  .site-header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    transition: background 400ms cubic-bezier(0.16,1,0.3,1),
+                backdrop-filter 400ms cubic-bezier(0.16,1,0.3,1),
+                border-color 400ms cubic-bezier(0.16,1,0.3,1);
+  }
+  .site-header.scrolled {
+    background: rgba(253,246,247,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(15,5,8,0.08);
+  }
+  .header-inner {
+    max-width: 1200px; margin: 0 auto; padding: 0 32px;
+    height: 68px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo-wrap { position: relative; height: 30px; text-decoration: none; display: block; }
+  .logo-wrap img { position: absolute; top: 0; left: 0; height: 30px; width: auto; transition: opacity 300ms ease; }
+  .logo-dark  { opacity: 1; }
+  .logo-light { opacity: 0; }
+  .scrolled .logo-dark  { opacity: 0; }
+  .scrolled .logo-light { opacity: 1; }
+  .site-nav { display: flex; gap: 4px; align-items: center; }
+  .nav-link {
+    font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 500;
+    color: #fff; padding: 8px 14px; border-radius: 8px;
+    text-decoration: none; transition: color 150ms, background 150ms;
+  }
+  .scrolled .nav-link { color: #6B404A; }
+  .nav-link:hover { color: #A0122E !important; background: #FCEAED; }
+  .nav-cta {
+    margin-left: 8px; font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 600;
+    padding: 9px 20px; border-radius: 9px; background: #A0122E; color: #fff !important;
+    text-decoration: none; box-shadow: 0 4px 16px rgba(160,18,46,0.3);
+    transition: background 200ms cubic-bezier(0.16,1,0.3,1), transform 200ms cubic-bezier(0.16,1,0.3,1);
+  }
+  .nav-cta:hover { background: #700A1F !important; transform: translateY(-1px); }
+
+  /* mobile hamburger */
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+  .hamburger span { display: block; width: 24px; height: 2px; background: #fff; border-radius: 2px; transition: background 300ms; }
+  .scrolled .hamburger span { background: #0F0508; }
+  .mobile-menu {
+    display: none; position: fixed; inset: 0; top: 68px; background: rgba(253,246,247,0.97);
+    backdrop-filter: blur(20px); z-index: 199; flex-direction: column; align-items: center;
+    justify-content: center; gap: 8px; padding: 32px;
+  }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { font-size: 22px; font-weight: 600; color: #0F0508; text-decoration: none; padding: 12px 24px; border-radius: 12px; width: 100%; text-align: center; }
+  .mobile-menu a:hover { background: #FCEAED; color: #A0122E; }
+  .mobile-menu .nav-cta-mobile { background: #A0122E; color: #fff !important; margin-top: 8px; }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh; background: #0F0508; display: flex; align-items: center;
+    position: relative; overflow: hidden; padding-top: 68px;
+  }
+  .hero-glow-1 {
+    position: absolute; top: 15%; left: 55%; width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(160,18,46,0.20) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-glow-2 {
+    position: absolute; bottom: 10%; right: 60%; width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(209,43,18,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1200px; margin: 0 auto; padding: 80px 32px; position: relative; z-index: 1; }
+  .hero-content { max-width: 760px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(160,18,46,0.12); border: 1px solid rgba(160,18,46,0.25);
+    border-radius: 999px; padding: 6px 14px; margin-bottom: 32px;
+  }
+  .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #A0122E; box-shadow: 0 0 8px #A0122E; }
+  .hero-badge-text { font-family: 'Roboto', sans-serif; font-size: 12px; font-weight: 600; color: #C4365A; letter-spacing: 0.08em; text-transform: uppercase; }
+  .hero-h1 {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: clamp(2.8rem, 5.5vw, 5rem); font-weight: 700;
+    letter-spacing: -0.04em; line-height: 1.08; color: #fff; margin-bottom: 28px;
+  }
+  .hero-h1 span { color: #A0122E; }
+  .hero-desc {
+    font-family: 'Roboto', sans-serif; font-size: clamp(1rem, 1.5vw, 1.2rem);
+    font-weight: 400; line-height: 1.7; color: #AA8A91; margin-bottom: 44px; max-width: 560px;
+  }
+  .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-primary {
+    font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 15px;
+    padding: 14px 32px; border-radius: 10px; background: #A0122E; color: #fff;
+    text-decoration: none; box-shadow: 0 4px 32px rgba(160,18,46,0.40);
+    transition: transform 200ms cubic-bezier(0.16,1,0.3,1), box-shadow 200ms cubic-bezier(0.16,1,0.3,1);
+    display: inline-block;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 40px rgba(160,18,46,0.55); }
+  .btn-ghost {
+    font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 15px;
+    padding: 14px 28px; border-radius: 10px; background: rgba(255,255,255,0.06);
+    color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.12);
+    transition: background 200ms cubic-bezier(0.16,1,0.3,1); display: inline-block;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.12); }
+  .hero-stats { margin-top: 64px; display: flex; gap: 40px; flex-wrap: wrap; }
+  .stat-num { font-family: 'Josefin Sans', sans-serif; font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.03em; }
+  .stat-label { font-family: 'Roboto', sans-serif; font-size: 13px; color: #8C6069; margin-top: 2px; }
+
+  /* ── SERVICES ── */
+  .section-services { padding: clamp(5rem,8vw,8rem) 32px; background: #FDF6F7; }
+  .section-inner { max-width: 1200px; margin: 0 auto; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A0122E; margin-bottom: 12px; font-family: 'Roboto', sans-serif; }
+  .section-h2 { font-family: 'Josefin Sans', sans-serif; font-size: clamp(2rem,3.5vw,2.75rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: #0F0508; margin-bottom: 16px; }
+  .section-lead { font-family: 'Roboto', sans-serif; font-size: 16px; color: #6B404A; line-height: 1.7; }
+  .section-header { margin-bottom: 56px; max-width: 560px; }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .service-card {
+    background: #fff; border-radius: 16px; padding: 28px;
+    border: 1px solid rgba(15,5,8,0.07); box-shadow: 0 4px 16px rgba(15,5,8,0.06);
+    transition: transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms cubic-bezier(0.16,1,0.3,1);
+    cursor: default;
+  }
+  .service-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(15,5,8,0.12); }
+  .service-icon {
+    width: 48px; height: 48px; border-radius: 12px; display: flex;
+    align-items: center; justify-content: center; margin-bottom: 20px;
+  }
+  .service-title { font-family: 'Josefin Sans', sans-serif; font-size: 18px; font-weight: 700; color: #0F0508; margin-bottom: 10px; letter-spacing: -0.01em; }
+  .service-desc { font-family: 'Roboto', sans-serif; font-size: 14px; color: #6B404A; line-height: 1.7; }
+
+  /* ── PORTFOLIO ── */
+  .section-portfolio { padding: clamp(5rem,8vw,8rem) 32px; background: #fff; }
+  .portfolio-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 48px; flex-wrap: wrap; gap: 16px; }
+  .portfolio-link { font-family: 'Roboto', sans-serif; font-weight: 600; font-size: 14px; color: #A0122E; text-decoration: none; border-bottom: 1.5px solid #A0122E; padding-bottom: 2px; }
+  .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .project-card {
+    border-radius: 16px; overflow: hidden; border: 1px solid rgba(15,5,8,0.07);
+    box-shadow: 0 4px 16px rgba(15,5,8,0.06); background: #fff;
+    transition: transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms cubic-bezier(0.16,1,0.3,1);
+    cursor: pointer;
+  }
+  .project-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(15,5,8,0.14); }
+  .project-thumbnail { height: 140px; display: flex; align-items: center; justify-content: center; }
+  .project-thumb-text { font-family: 'Josefin Sans', sans-serif; font-size: 32px; font-weight: 700; opacity: 0.3; letter-spacing: -0.05em; }
+  .project-body { padding: 20px 24px 16px; }
+  .project-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; font-family: 'Roboto', sans-serif; }
+  .project-title { font-family: 'Josefin Sans', sans-serif; font-size: 18px; font-weight: 700; color: #0F0508; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .project-desc { font-family: 'Roboto', sans-serif; font-size: 13px; color: #6B404A; line-height: 1.6; }
+  .project-footer { padding: 12px 24px; border-top: 1px solid rgba(15,5,8,0.07); display: flex; justify-content: space-between; align-items: center; }
+  .project-cta { font-family: 'Roboto', sans-serif; font-size: 12px; font-weight: 600; }
+  .project-year { font-family: 'Roboto', sans-serif; font-size: 11px; color: #AA8A91; }
+
+  /* ── ABOUT ── */
+  .section-about { padding: clamp(5rem,8vw,8rem) 32px; background: #0F0508; }
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+  .about-h2 { font-family: 'Josefin Sans', sans-serif; font-size: clamp(2rem,3vw,2.5rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; color: #fff; margin-bottom: 24px; }
+  .about-p { font-family: 'Roboto', sans-serif; font-size: 16px; color: #AA8A91; line-height: 1.8; margin-bottom: 20px; }
+  .btn-primary-dark {
+    font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 14px;
+    padding: 12px 24px; border-radius: 9px; background: #A0122E; color: #fff;
+    text-decoration: none; display: inline-block; box-shadow: 0 4px 24px rgba(160,18,46,0.4);
+    transition: background 200ms, transform 200ms;
+  }
+  .btn-primary-dark:hover { background: #700A1F; transform: translateY(-1px); }
+  .about-values { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .value-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; }
+  .value-title { font-family: 'Josefin Sans', sans-serif; font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .value-desc { font-family: 'Roboto', sans-serif; font-size: 13px; color: #8C6069; line-height: 1.6; }
+
+  /* ── CONTACT ── */
+  .section-contact { padding: clamp(5rem,8vw,8rem) 32px; background: #FDF6F7; }
+  .contact-inner { max-width: 640px; margin: 0 auto; text-align: center; }
+  .contact-sub { font-family: 'Roboto', sans-serif; font-size: 16px; color: #6B404A; margin-bottom: 40px; }
+  .contact-form { background: #fff; border-radius: 20px; padding: 40px; box-shadow: 0 12px 48px rgba(15,5,8,0.10); border: 1px solid rgba(15,5,8,0.07); text-align: left; display: flex; flex-direction: column; gap: 18px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 600; color: #0F0508; }
+  .form-input, .form-textarea {
+    width: 100%; padding: 10px 14px; font-family: 'Roboto', sans-serif; font-size: 14px;
+    border: 1.5px solid #E3D4D7; border-radius: 9px; outline: none;
+    transition: border-color 200ms; background: #fff; color: #0F0508;
+  }
+  .form-input:focus, .form-textarea:focus { border-color: #A0122E; }
+  .form-textarea { resize: vertical; }
+  .btn-submit {
+    width: 100%; padding: 14px; font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 15px;
+    background: #A0122E; color: #fff; border: none; border-radius: 10px; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(160,18,46,0.35);
+    transition: background 200ms cubic-bezier(0.16,1,0.3,1), transform 200ms cubic-bezier(0.16,1,0.3,1);
+  }
+  .btn-submit:hover { background: #700A1F; transform: translateY(-1px); }
+  .contact-success { background: #DCFCE7; border: 1.5px solid #22C55E; border-radius: 14px; padding: 32px; color: #15803D; font-family: 'Roboto', sans-serif; font-weight: 600; }
+
+  /* ── FOOTER ── */
+  .site-footer { background: #0F0508; border-top: 1px solid rgba(255,255,255,0.06); padding: 56px 32px 32px; }
+  .footer-inner { max-width: 1200px; margin: 0 auto; }
+  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 56px; }
+  .footer-brand-desc { font-family: 'Roboto', sans-serif; font-size: 14px; color: #8C6069; line-height: 1.7; max-width: 260px; margin: 16px 0 24px; }
+  .footer-socials { display: flex; gap: 10px; }
+  .social-btn {
+    width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 200ms; text-decoration: none;
+  }
+  .social-btn:hover { background: rgba(160,18,46,0.25); }
+  .social-btn span { font-family: 'Josefin Sans', sans-serif; font-size: 11px; font-weight: 700; color: #AA8A91; }
+  .footer-col-title { font-family: 'Josefin Sans', sans-serif; font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 16px; letter-spacing: -0.01em; }
+  .footer-links { display: flex; flex-direction: column; gap: 10px; }
+  .footer-link { font-family: 'Roboto', sans-serif; font-size: 13px; color: #8C6069; text-decoration: none; transition: color 150ms; }
+  .footer-link:hover { color: #fff; }
+  .footer-bottom { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .footer-copy { font-family: 'Roboto', sans-serif; font-size: 12px; color: #6B404A; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .header-inner { padding: 0 20px; }
+    .site-nav { display: none; }
+    .hamburger { display: flex; }
+    .hero-inner { padding: 60px 20px; }
+    .about-grid { grid-template-columns: 1fr; gap: 48px; }
+    .section-services, .section-portfolio, .section-about, .section-contact { padding: clamp(3rem,6vw,5rem) 20px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+    .form-row { grid-template-columns: 1fr; }
+    .contact-form { padding: 24px; }
+  }
+  @media (max-width: 480px) {
+    .footer-grid { grid-template-columns: 1fr; }
+    .about-values { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="site-header" id="site-header">
+  <div class="header-inner">
+    <a href="#" class="logo-wrap" onclick="scrollToTop(event)">
+      <img class="logo-dark"  src="../../assets/logo-white.png" alt="CreaVizione">
+      <img class="logo-light" src="../../assets/logo.png"       alt="CreaVizione">
+    </a>
+    <nav class="site-nav">
+      <a class="nav-link" href="#services" onclick="smoothScroll(event,'#services')">Services</a>
+      <a class="nav-link" href="#projets"  onclick="smoothScroll(event,'#projets')">Projets</a>
+      <a class="nav-link" href="#apropos"  onclick="smoothScroll(event,'#apropos')">À propos</a>
+      <a class="nav-link" href="#contact"  onclick="smoothScroll(event,'#contact')">Contact</a>
+      <a class="nav-cta"  href="#contact"  onclick="smoothScroll(event,'#contact')">Démarrer un projet</a>
+    </nav>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- ── MOBILE MENU ── -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#services" onclick="closeMobileMenu();smoothScroll(event,'#services')">Services</a>
+  <a href="#projets"  onclick="closeMobileMenu();smoothScroll(event,'#projets')">Projets</a>
+  <a href="#apropos"  onclick="closeMobileMenu();smoothScroll(event,'#apropos')">À propos</a>
+  <a href="#contact"  onclick="closeMobileMenu();smoothScroll(event,'#contact')">Contact</a>
+  <a href="#contact"  class="nav-cta-mobile" onclick="closeMobileMenu();smoothScroll(event,'#contact')">Démarrer un projet</a>
+</div>
+
+<main>
+
+<!-- ── HERO ── -->
+<section id="hero" class="hero">
+  <div class="hero-glow-1"></div>
+  <div class="hero-glow-2"></div>
+  <div class="hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <div class="hero-badge-dot"></div>
+        <span class="hero-badge-text">Agence digitale française</span>
+      </div>
+      <h1 class="hero-h1">Votre vision.<br><span>Notre expertise.</span></h1>
+      <p class="hero-desc">On crée des sites internet et des applications sur mesure qui convertissent — pour les entreprises B2B &amp; B2C qui veulent se démarquer.</p>
+      <div class="hero-btns">
+        <a class="btn-primary" href="#contact" onclick="smoothScroll(event,'#contact')">Démarrer un projet</a>
+        <a class="btn-ghost"   href="#projets" onclick="smoothScroll(event,'#projets')">Voir nos projets →</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-num">50+</div><div class="stat-label">Projets livrés</div></div>
+        <div><div class="stat-num">5 ans</div><div class="stat-label">d'expérience</div></div>
+        <div><div class="stat-num">98%</div><div class="stat-label">Clients satisfaits</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SERVICES ── -->
+<section id="services" class="section-services">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">Nos Services</div>
+      <h2 class="section-h2">Tout ce qu'il faut pour réussir en ligne.</h2>
+      <p class="section-lead">De la stratégie à la mise en ligne, on couvre l'ensemble de vos besoins digitaux avec une équipe de passionnés.</p>
+    </div>
+    <div class="cards-grid">
+
+      <div class="service-card">
+        <div class="service-icon" style="background:#FCEAED;color:#A0122E;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div class="service-title">Sites vitrines</div>
+        <div class="service-desc">Designs sur mesure, rapides et optimisés SEO. Votre meilleure carte de visite en ligne.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon" style="background:#FDE8E4;color:#D12B12;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="service-title">Applications web</div>
+        <div class="service-desc">Plateformes métier, SaaS, tableaux de bord. On construit des produits qui durent.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon" style="background:#DCFCE7;color:#22C55E;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div class="service-title">E-commerce</div>
+        <div class="service-desc">Boutiques performantes sur Shopify ou sur mesure. Conversion au cœur de chaque décision.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon" style="background:#DBEAFE;color:#3B82F6;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <div class="service-title">Design UI/UX</div>
+        <div class="service-desc">Maquettes Figma, prototypes interactifs, design systems. L'expérience avant tout.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── PORTFOLIO ── -->
+<section id="projets" class="section-portfolio">
+  <div class="section-inner">
+    <div class="portfolio-header">
+      <div>
+        <div class="section-label">Nos Projets</div>
+        <h2 class="section-h2">Ils nous ont fait confiance.</h2>
+      </div>
+      <a class="portfolio-link" href="#">Voir tous les projets →</a>
+    </div>
+    <div class="projects-grid">
+
+      <div class="project-card">
+        <div class="project-thumbnail" style="background:linear-gradient(135deg,#FCEAED 0%,#E8B4BC 100%);">
+          <div class="project-thumb-text" style="color:#A0122E;">Atelier</div>
+        </div>
+        <div class="project-body">
+          <div class="project-tag" style="color:#A0122E;">Site vitrine</div>
+          <div class="project-title">Atelier Lumière</div>
+          <div class="project-desc">Refonte complète avec design system et animations au scroll.</div>
+        </div>
+        <div class="project-footer">
+          <span class="project-cta" style="color:#A0122E;">Voir le projet →</span>
+          <span class="project-year">2025</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-thumbnail" style="background:linear-gradient(135deg,#FDE8E4 0%,#F5C4BA 100%);">
+          <div class="project-thumb-text" style="color:#D12B12;">FlowDesk</div>
+        </div>
+        <div class="project-body">
+          <div class="project-tag" style="color:#D12B12;">App web</div>
+          <div class="project-title">FlowDesk RH</div>
+          <div class="project-desc">Plateforme de gestion RH pour 500+ utilisateurs, design blanc sur mesure.</div>
+        </div>
+        <div class="project-footer">
+          <span class="project-cta" style="color:#D12B12;">Voir le projet →</span>
+          <span class="project-year">2024</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-thumbnail" style="background:linear-gradient(135deg,#DCFCE7 0%,#A7F3C0 100%);">
+          <div class="project-thumb-text" style="color:#22C55E;">Maison</div>
+        </div>
+        <div class="project-body">
+          <div class="project-tag" style="color:#22C55E;">E-commerce</div>
+          <div class="project-title">Maison Dorée</div>
+          <div class="project-desc">Boutique Shopify haut de gamme, tunnel d'achat optimisé +38% de conversion.</div>
+        </div>
+        <div class="project-footer">
+          <span class="project-cta" style="color:#22C55E;">Voir le projet →</span>
+          <span class="project-year">2024</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-thumbnail" style="background:linear-gradient(135deg,#DBEAFE 0%,#BFDBFE 100%);">
+          <div class="project-thumb-text" style="color:#3B82F6;">NovaBrand</div>
+        </div>
+        <div class="project-body">
+          <div class="project-tag" style="color:#3B82F6;">Branding + Web</div>
+          <div class="project-title">NovaBrand Studio</div>
+          <div class="project-desc">Identité visuelle complète + site vitrine responsive.</div>
+        </div>
+        <div class="project-footer">
+          <span class="project-cta" style="color:#3B82F6;">Voir le projet →</span>
+          <span class="project-year">2025</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── ABOUT ── -->
+<section id="apropos" class="section-about">
+  <div class="section-inner">
+    <div class="about-grid">
+      <div>
+        <div class="section-label" style="color:#C4365A;">À Propos</div>
+        <h2 class="about-h2">On construit ensemble.<br>Pas pour vous.</h2>
+        <p class="about-p">CreaVizione, c'est une équipe de designers et développeurs passionnés basée en France. On travaille main dans la main avec nos clients — pas en mode agence froide, mais en vrai partenaire de croissance.</p>
+        <p class="about-p">Notre méthode : écoute active, itérations rapides, livrables de qualité. Chaque projet est unique, chaque solution aussi.</p>
+        <a class="btn-primary-dark" href="#contact" onclick="smoothScroll(event,'#contact')">Travaillons ensemble</a>
+      </div>
+      <div class="about-values">
+        <div class="value-card">
+          <div class="value-title">Design-first</div>
+          <div class="value-desc">Chaque pixel a une raison d'être.</div>
+        </div>
+        <div class="value-card">
+          <div class="value-title">Agile</div>
+          <div class="value-desc">Livraisons en 2–6 semaines selon le projet.</div>
+        </div>
+        <div class="value-card">
+          <div class="value-title">Transparent</div>
+          <div class="value-desc">Pas de surprise sur les délais ou les tarifs.</div>
+        </div>
+        <div class="value-card">
+          <div class="value-title">Durable</div>
+          <div class="value-desc">Code maintenable, documentation incluse.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CONTACT ── -->
+<section id="contact" class="section-contact">
+  <div class="contact-inner">
+    <div class="section-label">Contact</div>
+    <h2 class="section-h2">Un projet en tête ?<br>Parlons-en.</h2>
+    <p class="contact-sub">On répond en moins de 24h ouvrées. Promis.</p>
+    <form class="contact-form" id="contact-form" onsubmit="handleSubmit(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Prénom</label>
+          <input class="form-input" type="text" placeholder="Marie">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Société</label>
+          <input class="form-input" type="text" placeholder="Acme Corp">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" placeholder="marie@acme.fr">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Votre projet</label>
+        <textarea class="form-input form-textarea" rows="4" placeholder="Décrivez votre projet en quelques lignes…"></textarea>
+      </div>
+      <button class="btn-submit" type="submit">Envoyer le message</button>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <img src="../../assets/logo-white.png" alt="CreaVizione" style="height:26px;width:auto;">
+        <p class="footer-brand-desc">Agence digitale française spécialisée en création de sites internet et d'applications sur mesure.</p>
+        <div class="footer-socials">
+          <a class="social-btn" href="#"><span>Li</span></a>
+          <a class="social-btn" href="#"><span>Tw</span></a>
+          <a class="social-btn" href="#"><span>Be</span></a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Services</div>
+        <div class="footer-links">
+          <a class="footer-link" href="#">Sites vitrines</a>
+          <a class="footer-link" href="#">Applications web</a>
+          <a class="footer-link" href="#">E-commerce</a>
+          <a class="footer-link" href="#">Design UI/UX</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Entreprise</div>
+        <div class="footer-links">
+          <a class="footer-link" href="#">À propos</a>
+          <a class="footer-link" href="#">Nos projets</a>
+          <a class="footer-link" href="#">Blog</a>
+          <a class="footer-link" href="#">Mentions légales</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Contact</div>
+        <div class="footer-links">
+          <a class="footer-link" href="#">Démarrer un projet</a>
+          <a class="footer-link" href="mailto:hello@creavizione.fr">hello@creavizione.fr</a>
+          <a class="footer-link" href="#">Paris, France</a>
+          <a class="footer-link" href="#">Lun–Ven 9h–18h</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© 2025 CreaVizione. Tous droits réservés.</span>
+      <span class="footer-copy">Fait avec passion en France</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Header scroll state
+  const header = document.getElementById('site-header');
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
+
+  // Smooth scroll
+  function smoothScroll(e, selector) {
+    e.preventDefault();
+    const el = document.querySelector(selector);
+    if (el) {
+      const y = el.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }
+  function scrollToTop(e) {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Mobile menu
+  function toggleMenu() {
+    document.getElementById('mobile-menu').classList.toggle('open');
+  }
+  function closeMobileMenu() {
+    document.getElementById('mobile-menu').classList.remove('open');
+  }
+
+  // Contact form
+  function handleSubmit(e) {
+    e.preventDefault();
+    const form = document.getElementById('contact-form');
+    form.outerHTML = '<div class="contact-success">✓ Message envoyé ! On vous revient très vite.</div>';
+  }
+</script>
+</body>
+</html>

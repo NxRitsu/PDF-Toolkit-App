@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "CreaVizione Website",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", ".", "--listen", "3000", "--no-clipboard"],
+      "port": 3000
+    },
+    {
+      "name": "PDF Toolkit (HTML)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", ".", "--listen", "3001", "--no-clipboard"],
+      "port": 3001
+    },
+    {
+      "name": "PDF Toolkit (Electron)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["electron", "pdf-toolkit-app/src/main.js"],
+      "port": 9222
+    }
+  ]
+}
